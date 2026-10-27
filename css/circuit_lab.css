@@ -1,0 +1,1582 @@
+/**
+ * circuit_lab.css
+ * Friendly Google Lab Daylight Theme for the Quantum Circuit Lab & Mode Switcher.
+ * Inspired by Google UI colors (#4285f4 Blue, #34a853 Green, #fbbc04 Yellow, #ea4335 Red)
+ * and the approachable physical workbench feel of learn-arduino-red.vercel.app.
+ */
+
+:root {
+    --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+    --g-blue: #1a73e8;
+    --g-blue-soft: #e8f0fe;
+    --g-green: #34a853;
+    --g-green-soft: #e6f4ea;
+    --g-yellow: #fbbc04;
+    --g-yellow-soft: #fef7e0;
+    --g-red: #ea4335;
+    --g-red-soft: #fce8e6;
+    --g-ink: #202124;
+    --g-muted: #5f6368;
+    --g-border: #dadce0;
+    --g-surface: #ffffff;
+    --g-bg: #f0f4f9;
+}
+
+/* ============================================================================
+   1. GLOBAL MODE SWITCHER (Bright Friendly Google Pill)
+   ============================================================================ */
+.global-mode-switcher {
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: flex;
+    gap: 6px;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1.5px solid #dadce0;
+    border-radius: 999px;
+    box-shadow: 0 8px 28px rgba(60, 64, 67, 0.16);
+}
+
+.mode-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #5f6368;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 180ms var(--ease-out-strong),
+                border-color 180ms var(--ease-out-strong),
+                color 180ms var(--ease-out-strong),
+                transform 150ms var(--ease-out-strong);
+}
+
+.mode-tab-btn:hover {
+    color: #202124;
+    background: #f1f3f4;
+}
+
+.mode-tab-btn:active {
+    transform: scale(0.97);
+}
+
+.mode-tab-btn.active {
+    background: #e8f0fe;
+    border-color: #4285f4;
+    color: #1967d2;
+}
+
+.mode-tab-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dot-blue {
+    background: #4285f4;
+}
+
+.dot-multi {
+    background: conic-gradient(#4285f4 0 90deg, #ea4335 90deg 180deg, #fbbc04 180deg 270deg, #34a853 270deg 360deg);
+}
+
+.mode-tab-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.mode-tab-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #202124;
+    line-height: 1.15;
+}
+
+.mode-tab-btn.active .mode-tab-title {
+    color: #1a73e8;
+}
+
+.mode-tab-sub {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #5f6368;
+    margin-top: 1px;
+}
+
+.mode-tab-pill {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e6f4ea;
+    border: 1px solid #34a853;
+    color: #137333;
+}
+
+/* Inline CTA inside 3D Left Info Box */
+.qc-launch-circuit-cta {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn-launch-circuit-inline {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 999px;
+    border: 1px solid #1a73e8;
+    background: #1a73e8;
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.25);
+    transition: background-color 180ms var(--ease-out-strong),
+                transform 150ms var(--ease-out-strong);
+}
+
+.btn-launch-circuit-inline:hover {
+    background: #1557b0;
+}
+
+.btn-launch-circuit-inline:active {
+    transform: scale(0.97);
+}
+
+/* Hide 3D overlays cleanly when in Circuit Lab mode */
+body.circuit-lab-mode .top-bar,
+body.circuit-lab-mode .top-right-bar,
+body.circuit-lab-mode #qc-info-box,
+body.circuit-lab-mode #info-reopen-pill,
+body.circuit-lab-mode #qc-modes-panel,
+body.circuit-lab-mode #ref-drawer,
+body.circuit-lab-mode .control-panel,
+body.circuit-lab-mode #nametags-layer {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* ============================================================================
+   2. QUANTUM CIRCUIT LAB LIGHT ARTBOARD (Google + Arduino Workbench Vibe)
+   ============================================================================ */
+.qcl-workspace {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 30;
+    padding: 68px 16px 14px 16px;
+    background-color: #f0f4f9;
+    background-image:
+        radial-gradient(circle at 15% 15%, rgba(66, 133, 244, 0.08), transparent 35%),
+        radial-gradient(circle at 85% 80%, rgba(52, 168, 83, 0.08), transparent 35%),
+        linear-gradient(90deg, rgba(218, 220, 224, 0.45) 1px, transparent 1px),
+        linear-gradient(rgba(218, 220, 224, 0.45) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 24px 24px, 24px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    color: #202124;
+}
+
+.qcl-main-grid {
+    display: grid;
+    grid-template-columns: 295px minmax(520px, 1fr) 335px;
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+}
+
+.qcl-card {
+    background: #ffffff;
+    border: 1px solid #dadce0;
+    border-radius: 16px;
+    padding: 13px 15px;
+    box-shadow: 0 6px 20px rgba(60, 64, 67, 0.08);
+}
+
+.qcl-left-col,
+.qcl-center-col,
+.qcl-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.qcl-card-title {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #202124;
+}
+
+.qcl-eyebrow-tag {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #1a73e8;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+/* ============================================================================
+   3. LEFT COLUMN: COMPACT LESSON STEPPER & GATE PARTS TRAY
+   ============================================================================ */
+.qcl-lesson-box {
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-top: 4px solid #4285f4;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.qcl-lesson-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.qcl-google-pill {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+
+.pill-blue {
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+.qcl-lesson-nav-btns {
+    display: flex;
+    gap: 4px;
+}
+
+.qcl-icon-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid #dadce0;
+    background: #ffffff;
+    color: #3c4043;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background-color 140ms ease, transform 140ms ease;
+}
+
+.qcl-icon-btn:hover {
+    background: #e8f0fe;
+    border-color: #4285f4;
+    color: #1a73e8;
+}
+
+.qcl-icon-btn:active {
+    transform: scale(0.95);
+}
+
+.qcl-lesson-select {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid #dadce0;
+    background: #ffffff;
+    color: #202124;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    cursor: pointer;
+}
+
+.qcl-lesson-desc {
+    font-size: 11.3px;
+    line-height: 1.44;
+    color: #3c4043;
+    margin-bottom: 7px;
+}
+
+.qcl-try-callout {
+    background: #e6f4ea;
+    border: 1px solid #a8dab5;
+    border-radius: 8px;
+    padding: 6px 9px;
+    font-size: 11px;
+    line-height: 1.38;
+    color: #137333;
+}
+
+.qcl-try-tag {
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 9.5px;
+    margin-right: 4px;
+}
+
+/* Gate Parts Tray */
+.qcl-section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.qcl-subtle-hint {
+    font-size: 10px;
+    font-weight: 600;
+    color: #5f6368;
+}
+
+.qcl-palette-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.qcl-palette-group-label {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.qcl-palette-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+}
+
+.qcl-gate-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 2px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1.5px solid #dadce0;
+    border-top: 3.5px solid var(--gate-color, #1a73e8);
+    color: #202124;
+    cursor: grab;
+    box-shadow: 0 2px 5px rgba(60, 64, 67, 0.06);
+    transition: background-color 140ms ease, border-color 140ms ease, transform 140ms var(--ease-out-strong);
+}
+
+.qcl-gate-chip:hover {
+    background: #f8f9fa;
+    border-color: var(--gate-color, #1a73e8);
+    transform: translateY(-1px);
+}
+
+.qcl-gate-chip:active {
+    transform: scale(0.95);
+    cursor: grabbing;
+}
+
+.qcl-gate-chip.active {
+    background: #e8f0fe;
+    border-color: var(--gate-color, #1a73e8);
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.qcl-chip-sym {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #202124;
+}
+
+.qcl-chip-sub {
+    font-size: 8.5px;
+    font-weight: 700;
+    color: #5f6368;
+}
+
+/* Compact Selected Gate Inspector */
+.qcl-gate-inspector {
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 9px 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.qcl-insp-top {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding-left: 7px;
+    border-left: 3px solid #1a73e8;
+}
+
+.qcl-insp-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.qcl-insp-status {
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #5f6368;
+}
+
+.qcl-insp-name {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #202124;
+}
+
+.qcl-insp-tagline {
+    font-size: 11px;
+    color: #3c4043;
+    line-height: 1.36;
+}
+
+.qcl-inspector-theta,
+.qcl-inspector-meas {
+    background: #ffffff;
+    border: 1px solid #fbbc04;
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+
+.qcl-theta-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #3c4043;
+    margin-bottom: 4px;
+}
+
+.qcl-theta-header strong {
+    color: #b06000;
+    font-family: monospace;
+}
+
+#qcl-theta-slider {
+    width: 100%;
+    accent-color: #f9ab00;
+    cursor: pointer;
+}
+
+.qcl-theta-presets {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.qcl-theta-preset-btn,
+.qcl-meas-mode-btn {
+    flex: 1;
+    padding: 3px 5px;
+    font-size: 9.5px;
+    font-weight: 700;
+    border-radius: 5px;
+    border: 1px solid #dadce0;
+    background: #f8f9fa;
+    color: #3c4043;
+    cursor: pointer;
+}
+
+.qcl-theta-preset-btn.active,
+.qcl-meas-mode-btn.active {
+    background: #fef7e0;
+    border-color: #fbbc04;
+    color: #b06000;
+}
+
+.qcl-insp-math-mini {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+
+.qcl-insp-ket-action code {
+    display: block;
+    font-size: 10px;
+    color: #1a73e8;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.qcl-unitary-matrix {
+    border-collapse: collapse;
+    margin: 0 auto;
+    font-family: monospace;
+    font-size: 10.5px;
+    border-left: 2px solid #5f6368;
+    border-right: 2px solid #5f6368;
+}
+
+.qcl-unitary-matrix td {
+    padding: 2px 7px;
+    text-align: center;
+    color: #202124;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   4. CENTER STAGE: PHYSICAL QUANTUM CHIP + COAXIAL PULSE COMPOSER
+   ============================================================================ */
+.qcl-workbench-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 9px 14px;
+}
+
+.qcl-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.qcl-group-title {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #5f6368;
+    margin-right: 2px;
+}
+
+.qcl-chip-status-pill {
+    font-size: 10.5px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+/* Validation Banner */
+.qcl-validation-banner {
+    padding: 9px 14px;
+    border-radius: 12px;
+    background: #fef7e0;
+    border: 1.5px solid #fbbc04;
+    color: #b06000;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qcl-val-text {
+    flex: 1;
+}
+
+.qcl-val-close {
+    background: none;
+    border: none;
+    color: #b06000;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* Physical Quantum Processor Card */
+.qcl-physical-chip-card {
+    padding: 11px 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
+}
+
+.qcl-chip-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.qcl-chip-legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 10px;
+    font-weight: 700;
+    color: #5f6368;
+}
+
+.chip-leg-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.leg-line {
+    display: inline-block;
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.leg-green { background: #22c55e; }
+.leg-blue { background: #3b82f6; }
+.leg-yellow { background: #fbbc04; }
+.leg-coupler { background: #34a853; }
+
+.qcl-physical-chip-stage {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.qcl-qpu-svg {
+    width: 100%;
+    max-height: 195px;
+    height: auto;
+    display: block;
+    border-radius: 10px;
+}
+
+.qpu-transmon-unit:hover rect,
+.qpu-transmon-unit:hover path {
+    filter: brightness(1.1);
+}
+
+/* Coaxial Pulse Composer Card */
+.qcl-composer-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.qcl-placed-gate-bar {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e8f0fe;
+    border: 1px solid #4285f4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qcl-pgb-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: #1a73e8;
+}
+
+.qcl-pgb-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.qcl-circuit-board-wrap {
+    overflow-x: auto;
+    padding: 4px 2px;
+}
+
+.qcl-circuit-board {
+    display: flex;
+    flex-direction: column;
+    min-width: 520px;
+    gap: 3px;
+}
+
+.qcl-grid-header,
+.qcl-wire-row {
+    display: grid;
+    grid-template-columns: 128px repeat(6, minmax(64px, 1fr));
+    align-items: center;
+}
+
+.qcl-wire-label-col {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #5f6368;
+    padding-left: 6px;
+}
+
+.qcl-step-col-header {
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #5f6368;
+    padding: 4px 0;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+}
+
+.qcl-step-col-header:hover {
+    background: #f1f3f4;
+    color: #202124;
+}
+
+.qcl-step-col-header.active-step-col {
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+.qcl-wire-row {
+    height: 54px;
+    position: relative;
+}
+
+.qcl-wire-init-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 6px;
+    padding-right: 6px;
+    z-index: 2;
+}
+
+.qcl-sma-jack {
+    width: 10px;
+    height: 16px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #fbbf24, #d97706);
+    border: 1px solid #92400e;
+    flex-shrink: 0;
+}
+
+.qcl-wire-name {
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 800;
+    color: #202124;
+}
+
+.qcl-init-state-btn {
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1.5px solid #4285f4;
+    background: #e8f0fe;
+    color: #1a73e8;
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background-color 140ms ease, transform 140ms ease;
+}
+
+.qcl-init-state-btn:hover {
+    background: #1a73e8;
+    color: #ffffff;
+}
+
+.qcl-init-state-btn:active {
+    transform: scale(0.95);
+}
+
+/* Coaxial Waveguide Cell */
+.qcl-wire-cell {
+    position: relative;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.qcl-wire-cell.active-step-cell {
+    background: rgba(66, 133, 244, 0.08);
+    box-shadow: inset 0 0 0 1.5px rgba(66, 133, 244, 0.28);
+}
+
+.qcl-wire-cell.drag-over {
+    background: #e6f4ea;
+    box-shadow: inset 0 0 0 2px #34a853;
+}
+
+/* Physical Coaxial Tube Track Line */
+.qcl-coax-wire-track {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(180deg, #94a3b8 0%, #cbd5e1 50%, #64748b 100%);
+    border-radius: 2px;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.qcl-empty-slot-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1.5px dashed #9aa0a6;
+    background: #ffffff;
+    color: #5f6368;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    opacity: 0.55;
+    transition: opacity 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+
+.qcl-wire-cell:hover .qcl-empty-slot-dot {
+    opacity: 1;
+    border-color: #1a73e8;
+    color: #1a73e8;
+    transform: scale(1.1);
+}
+
+/* Placed Hardware Gate Module on Coax Wire */
+.qcl-placed-gate {
+    position: relative;
+    z-index: 4;
+    min-width: 46px;
+    height: 40px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--gate-color, #1a73e8);
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 10px rgba(60, 64, 67, 0.22);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 140ms var(--ease-out-strong), box-shadow 140ms ease;
+}
+
+.qcl-placed-gate:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(60, 64, 67, 0.3);
+}
+
+.qcl-placed-gate.selected {
+    box-shadow: 0 0 0 3px #202124, 0 6px 16px rgba(60, 64, 67, 0.35);
+}
+
+.qcl-gate-sym {
+    font-size: 13.5px;
+    font-weight: 800;
+    line-height: 1.05;
+}
+
+.qcl-gate-param {
+    font-size: 8.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.qcl-gate-del-btn {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid #ffffff;
+    background: #ea4335;
+    color: #ffffff;
+    font-size: 11px;
+    line-height: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.qcl-placed-gate:hover .qcl-gate-del-btn,
+.qcl-placed-gate.selected .qcl-gate-del-btn {
+    display: flex;
+}
+
+/* Multi-qubit vertical coupler bar */
+.qcl-vconn {
+    position: absolute;
+    left: 50%;
+    width: 4px;
+    background: var(--conn-color, #34a853);
+    transform: translateX(-50%);
+    z-index: 3;
+    pointer-events: none;
+}
+
+.qcl-vconn.vconn-down {
+    top: 50%;
+    height: calc(var(--span-rows, 1) * 54px);
+}
+
+.qcl-vconn.vconn-up {
+    bottom: 50%;
+    height: calc(var(--span-rows, 1) * 54px);
+}
+
+.ctrl-dot-core,
+.cnot-plus,
+.swap-x {
+    font-size: 14px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.ctrl-sub-label {
+    font-size: 7.5px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Classical Readout Row */
+.qcl-classical-row {
+    height: 32px;
+}
+
+.qcl-cname {
+    font-size: 10.5px;
+    color: #5f6368;
+}
+
+.qcl-creg-readout {
+    font-family: monospace;
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: #f1f3f4;
+    color: #202124;
+}
+
+.qcl-classical-cell {
+    position: relative;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qcl-double-wire {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-top: 1.5px solid #9aa0a6;
+    border-bottom: 1.5px solid #9aa0a6;
+    transform: translateY(-50%);
+}
+
+.qcl-meas-arrow-badge {
+    position: relative;
+    z-index: 2;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: #fef7e0;
+    border: 1px solid #fbbc04;
+    color: #b06000;
+}
+
+/* Timeline Bar */
+.qcl-timeline-bar {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.qcl-exec-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.qcl-timeline-steps {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.qcl-timeline-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 9px;
+    border-radius: 8px;
+    border: 1px solid #dadce0;
+    background: #f8f9fa;
+    color: #5f6368;
+    cursor: pointer;
+}
+
+.qcl-timeline-pill:hover {
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+.qcl-timeline-pill.active {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: #ffffff;
+}
+
+.tl-step-num {
+    font-size: 9.5px;
+    font-weight: 800;
+}
+
+.tl-step-op {
+    font-size: 8.5px;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   5. RIGHT COLUMN: CLEAN TABBED INSPECTOR (Bloch | Shots | Math)
+   ============================================================================ */
+.qcl-live-state-summary {
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.qcl-lss-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+
+.qcl-lss-op {
+    font-size: 12px;
+    font-weight: 800;
+    color: #202124;
+    margin-bottom: 6px;
+}
+
+.qcl-classification-badge {
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+.qcl-classification-badge.badge-entangled {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.qcl-classification-badge.badge-collapsed {
+    background: #fef7e0;
+    color: #b06000;
+}
+
+.qcl-dirac-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+.qcl-dirac-lhs {
+    font-family: monospace;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #1a73e8;
+}
+
+.qcl-dirac-ket {
+    font-family: monospace;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #202124;
+    flex: 1;
+    word-break: break-word;
+}
+
+/* 3-Tab Bar */
+.qcl-inspector-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    background: #f1f3f4;
+    padding: 4px;
+    border-radius: 10px;
+}
+
+.qcl-insp-tab {
+    padding: 7px 6px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: #5f6368;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease;
+}
+
+.qcl-insp-tab:hover {
+    color: #202124;
+}
+
+.qcl-insp-tab.active {
+    background: #ffffff;
+    color: #1a73e8;
+    box-shadow: 0 2px 6px rgba(60, 64, 67, 0.12);
+}
+
+.qcl-tab-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+}
+
+.qcl-pane-subtitle {
+    font-size: 11px;
+    font-weight: 700;
+    color: #5f6368;
+}
+
+.qcl-friendly-note {
+    background: #f8f9fa;
+    border-left: 3px solid #4285f4;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.42;
+    color: #3c4043;
+}
+
+/* Bloch Spheres Grid */
+.qcl-bloch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+    gap: 8px;
+}
+
+.qcl-bloch-card {
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.qcl-bloch-card-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.qcl-bloch-qname {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #202124;
+}
+
+.qcl-bloch-state-tag {
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+.qcl-bloch-state-tag.entangled-tag {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.qcl-bloch-canvas {
+    cursor: grab;
+    max-width: 100%;
+}
+
+.qcl-bloch-coords {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    font-family: monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #5f6368;
+    margin-top: 4px;
+}
+
+/* Shots & Histogram Tab */
+.qcl-shots-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.qcl-shot-pills {
+    display: flex;
+    gap: 4px;
+}
+
+.qcl-shot-pill {
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #dadce0;
+    background: #f8f9fa;
+    color: #3c4043;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.qcl-shot-pill.active {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: #ffffff;
+}
+
+.qcl-histogram-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #5f6368;
+}
+
+.hist-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.hist-swatch-theory { background: #4285f4; }
+.hist-swatch-shots { background: #34a853; }
+
+.qcl-histogram-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.qcl-hist-row {
+    display: grid;
+    grid-template-columns: 46px 1fr;
+    align-items: center;
+    gap: 6px;
+}
+
+.qcl-hist-ket {
+    font-family: monospace;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #202124;
+}
+
+.qcl-hist-tracks {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.qcl-hist-bar-line {
+    position: relative;
+    height: 15px;
+    background: #f1f3f4;
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.qcl-hist-fill-theory {
+    height: 100%;
+    background: #4285f4;
+    border-radius: 5px;
+    transition: width 220ms var(--ease-out-strong);
+}
+
+.qcl-hist-fill-shots {
+    height: 100%;
+    background: #34a853;
+    border-radius: 5px;
+    transition: width 220ms var(--ease-out-strong);
+}
+
+.qcl-hist-val {
+    position: absolute;
+    right: 6px;
+    font-family: monospace;
+    font-size: 9.5px;
+    font-weight: 800;
+    color: #202124;
+}
+
+/* Math & State Tab */
+.qcl-math-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.qcl-amplitudes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+    gap: 7px;
+}
+
+.qcl-amp-card {
+    padding: 7px 9px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    opacity: 0.65;
+}
+
+.qcl-amp-card.non-zero {
+    opacity: 1;
+    background: #ffffff;
+    border-color: #4285f4;
+}
+
+.qcl-amp-top {
+    display: flex;
+    justify-content: space-between;
+    font-family: monospace;
+    font-size: 11.5px;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.qcl-amp-ket { color: #202124; }
+.qcl-amp-prob { color: #1a73e8; }
+
+.qcl-amp-bar-track {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.qcl-amp-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 220ms var(--ease-out-strong);
+}
+
+.qcl-amp-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #5f6368;
+}
+
+.qcl-formal-math-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.qcl-math-card {
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.qcl-math-card-title {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #1a73e8;
+    margin-bottom: 5px;
+}
+
+.qcl-math-eq-line {
+    font-size: 11px;
+    color: #202124;
+    margin-bottom: 5px;
+}
+
+.qcl-math-matrix-flex {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.qcl-math-evolution-box {
+    font-size: 11px;
+    line-height: 1.45;
+    color: #3c4043;
+}
+
+.qcl-formal-amp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10.5px;
+}
+
+.qcl-formal-amp-table th,
+.qcl-formal-amp-table td {
+    padding: 4px 6px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.qcl-formal-amp-table tr.active-basis-row td {
+    background: #e8f0fe;
+    color: #1967d2;
+    font-weight: 700;
+}
+
+/* ============================================================================
+   6. GOOGLE FRIENDLY BUTTON SYSTEM
+   ============================================================================ */
+.qcl-btn {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid #dadce0;
+    background: #ffffff;
+    color: #3c4043;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 140ms ease, border-color 140ms ease, transform 140ms var(--ease-out-strong);
+}
+
+.qcl-btn:hover:not(:disabled) {
+    background: #f8f9fa;
+    border-color: #4285f4;
+    color: #1a73e8;
+}
+
+.qcl-btn:active:not(:disabled) {
+    transform: scale(0.96);
+}
+
+.qcl-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.qcl-btn-sm { padding: 5px 10px; font-size: 10.5px; }
+.qcl-btn-xs { padding: 3px 8px; font-size: 10px; }
+
+.qcl-btn-blue {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: #ffffff;
+}
+
+.qcl-btn-blue:hover:not(:disabled) {
+    background: #1557b0;
+    color: #ffffff;
+}
+
+.qcl-btn-green-play {
+    background: #34a853;
+    border-color: #34a853;
+    color: #ffffff;
+}
+
+.qcl-btn-green-play:hover:not(:disabled) {
+    background: #1e8e3e;
+    color: #ffffff;
+}
+
+.qcl-btn-green-play.playing {
+    background: #fbbc04;
+    border-color: #f9ab00;
+    color: #202124;
+}
+
+.qcl-btn-red-outline:hover:not(:disabled) {
+    background: #fce8e6;
+    border-color: #ea4335;
+    color: #d93025;
+}
+
+.qcl-btn-chip {
+    background: #f8f9fa;
+    border-color: #dadce0;
+}
+
+.qcl-btn-3d-jump {
+    background: #e8f0fe;
+    border-color: #4285f4;
+    color: #1a73e8;
+}
+
+@media (max-width: 1250px) {
+    .qcl-main-grid {
+        grid-template-columns: 280px 1fr;
+    }
+    .qcl-right-col {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 860px) {
+    .qcl-main-grid {
+        grid-template-columns: 1fr;
+    }
+}

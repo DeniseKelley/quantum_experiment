@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Quantum AI Laboratory — Interactive 3D Quantum Computer &amp; Quantum Circuit Lab</title>
+    <link rel="stylesheet" href="css/style.css?v=18">
+    <link rel="stylesheet" href="css/circuit_lab.css?v=18">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <!-- 3D-Projected Floating Component Nametags Layer -->
+    <div id="nametags-layer"></div>
+
+    <!-- Top Left Header -->
+    <div class="ui-overlay top-bar hideable-ui">
+        <div class="lab-badge">GOOGLE QUANTUM AI // 360° IBL + EXTENDED GANTRY + ROOM-TEMP CONTROL RACKS</div>
+        <div class="lab-title" id="lab-title">GOOGLE QUANTUM AI LAB — SANTA BARBARA</div>
+        <div class="lab-subtitle" id="lab-subtitle">1,000-QUBIT CRYOSTAT, 300K BREAKOUT TOWERS, UMBILICAL COAX LOOMS, RF-DAC RACK &amp; GAS HANDLING</div>
+    </div>
+
+    <!-- Top Right Reference Gallery & Hide UI Controls -->
+    <div class="ui-overlay top-right-bar">
+        <button class="ui-btn btn-ref-toggle hideable-ui" id="btn-ref-toggle">Google Quantum AI References</button>
+        <button class="ui-btn btn-ref-toggle" id="btn-hide-ui">Hide UI</button>
+    </div>
+
+    <!-- Left Info Box (Closable, Google Lab Friendly UI) -->
+    <div class="ui-overlay qc-info-box hideable-ui" id="qc-info-box">
+        <div class="info-box-header-row">
+            <div class="info-category" id="info-category">OVERVIEW // SEQ 0/27</div>
+            <button class="info-close-btn" id="info-close-btn" title="Close Info Panel" aria-label="Close Info Panel">&times;</button>
+        </div>
+        <h3 class="info-title" id="info-title">Google Quantum AI Cryostat, Room-Temp Wiring, Control Racks &amp; Extended Gantry</h3>
+        <div class="info-body" id="info-body"></div>
+        <button class="info-more-btn" id="info-more-btn">Show more ▼</button>
+        <div class="info-details" id="info-details" style="display: none;"></div>
+        <div class="tour-nav-row">
+            <button class="tour-btn" id="btn-tour-prev" title="Previous Component (Left Arrow)">← Prev</button>
+            <button class="tour-btn" id="btn-tour-next" title="Next Component (Right Arrow)">Next →</button>
+        </div>
+    </div>
+
+    <!-- Reopen Info Pill (Shown when Left Info Box is closed) -->
+    <button class="ui-overlay info-reopen-pill hideable-ui" id="info-reopen-pill" style="display: none;" title="Show Component Information">
+        <span class="reopen-dot">i</span> Show Component Info
+    </button>
+
+    <!-- Right Subsystem Mode Selector Stack (Modeled after #modesContainer in apps.fz-juelich.de/qcmodel) -->
+    <div class="ui-overlay qc-modes-panel hideable-ui" id="qc-modes-panel">
+        <div class="modes-header">Subsystems</div>
+        <button class="btn-qc-mode mode-default active" data-mode="default">Overview</button>
+        <button class="btn-qc-mode mode-hull" data-mode="hull">Hull (Art Shield)</button>
+        <button class="btn-qc-mode mode-plates" data-mode="plates">Bulk of Cryostat</button>
+        <button class="btn-qc-mode mode-electronic" data-mode="electronic_circuit">Electronic Circuits</button>
+        <button class="btn-qc-mode mode-qpu" data-mode="qpu">QPU Chip (Willow)</button>
+        <button class="btn-qc-mode mode-room-temp" data-mode="room_temp_control">Room-Temp Wiring &amp; Racks</button>
+        <button class="btn-qc-mode mode-helium" data-mode="helium_system">Helium &amp; Gas System</button>
+        <button class="btn-qc-mode mode-frame" data-mode="frame">Extended Gantry Frame</button>
+    </div>
+
+    <!-- Reference Photos Drawer (Hidden by default) -->
+    <div class="ui-overlay ref-drawer hideable-ui" id="ref-drawer" style="display: none;">
+        <div class="ref-drawer-header">
+            <span class="ref-drawer-title">Google Quantum AI &amp; Cryostat Hardware References</span>
+            <button class="ref-close-btn" id="ref-close-btn">&times;</button>
+        </div>
+        <p class="ref-drawer-desc">
+            Hardware and architectural references used to model the Google Quantum AI chandelier, 300K top hermetic breakout towers, color-coded room-temperature coaxial cable looms, 6U RF-DAC/FPGA control crates, and extended T-slot gantry frame:
+        </p>
+        <div class="ref-grid">
+            <div class="ref-card">
+                <img src="assets/references/sci_news_14467_quantum_computer.jpg" alt="Google Quantum AI 8-Pod Chandelier & Room-Temp Coax Racks (Sci.News 14467)">
+                <div class="ref-caption">Primary Reference: 8-Pod Chandelier, Green/Blue/Yellow Coax Looms &amp; Blue RF-DAC Control Crates (Sci.News 14467)</div>
+            </div>
+            <div class="ref-card">
+                <img src="assets/references/Dilution_Fridge_009_8K.png" alt="Google Quantum AI Top 300K Finned Hermetic Breakout Towers">
+                <div class="ref-caption">Top 300K Flange Reference: 8 Radial Finned Aluminum Hermetic Coax Feedthrough Breakout Towers</div>
+            </div>
+            <div class="ref-card">
+                <img src="assets/references/Google_Willow_Quantum_Chip.jpg" alt="Google Willow 105-Qubit Quantum Chip">
+                <div class="ref-caption">Google Willow (105-Qubit) Flip-Chip QPU &amp; Radial Fan-Out Silicon Interposer</div>
+            </div>
+            <div class="ref-card">
+                <img src="assets/references/Google_Quantum_AI_Cryostat.jpg" alt="Google Quantum AI Chandelier, Extended T-Slot Frame & Racks">
+                <div class="ref-caption">Extended T-Slot Aluminum Gantry Bridge, Pulse-Tube Cold Heads, Instrument Rack &amp; Art Hull</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Center Control Toolbar (Google Lab Camera Controls Only) -->
+    <div class="ui-overlay control-panel hideable-ui">
+        <div class="button-group">
+            <span class="group-label">Google Quantum AI Lab Camera</span>
+            <button class="ui-btn" id="btn-reset-cam">Reset View</button>
+            <button class="ui-btn" id="btn-auto-orbit">Auto-Orbit: Off</button>
+        </div>
+    </div>
+
+    <script src="js/libs/three.min.js"></script>
+    <script src="js/libs/OrbitControls.js"></script>
+    <script src="js/environment.js?v=18"></script>
+    <script src="js/quantum_computer.js?v=18"></script>
+    <script src="js/interaction.js?v=18"></script>
+    <script src="js/circuit_simulator.js?v=18"></script>
+    <script src="js/circuit_lab_ui.js?v=18"></script>
+    <script src="js/main.js?v=18"></script>
+</body>
+</html>
