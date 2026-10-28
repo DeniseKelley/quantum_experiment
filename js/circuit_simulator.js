@@ -946,105 +946,109 @@ class QuantumCircuitSimulator {
  */
 const CIRCUIT_LESSONS = [
     {
-        id: 'lesson_1_not',
+        id: 'lesson_1_hw3_q1',
         number: 1,
-        title: '1. Qubits & The Quantum NOT (X Gate)',
-        badge: 'FOUNDATION',
+        title: '1. Ch. 2 & HW3 Q1: Single-Qubit Gates (|0⟩ → H → Z → |−⟩)',
+        badge: 'HW3 PART 1 Q1',
         numQubits: 1,
         initialStates: ['|0⟩'],
         gates: [
-            { id: 'l1_g1', type: 'X', qubit: 0, step: 0 },
-            { id: 'l1_g2', type: 'M', qubit: 0, step: 2 }
+            { id: 'l1_g1', type: 'H', qubit: 0, step: 0 },
+            { id: 'l1_g2', type: 'Z', qubit: 0, step: 1 },
+            { id: 'l1_g3', type: 'M', qubit: 0, step: 3 }
         ],
-        conceptTitle: 'From Classical Bits to Qubit Vectors',
-        explanation: 'A classical bit on an Arduino pin is either 0V (LOW) or 5V (HIGH). A quantum bit (qubit) lives in a 2D complex vector space spanned by |0⟩ (North Pole of the Bloch sphere) and |1⟩ (South Pole). The Pauli-X gate acts as a quantum NOT gate: it rotates the statevector by π radians (180°) around the X-axis, flipping |0⟩ → |1⟩ with 100% certainty.',
-        tryThis: 'Click "Step →" to watch the X gate flip q0 from |0⟩ to |1⟩ on the Bloch sphere, or add a second X gate at Step 1 to see how X · X = I flips it back to |0⟩!'
+        conceptTitle: 'Superposition & Relative Phase Flip (H followed by Z)',
+        explanation: 'In CSE 4412 HW3 Q1, a qubit starts in |ψ₀⟩ = |0⟩ (North Pole of the 3D Bloch sphere pedestal). First, H creates |ψ₁⟩ = |+⟩ = (|0⟩ + |1⟩)/√2. Next, Z flips the phase of |1⟩ to −|1⟩, giving |ψ₂⟩ = |−⟩ = (|0⟩ − |1⟩)/√2. Notice that P(0) = P(1) = 50% at both |ψ₁⟩ and |ψ₂⟩, yet the 3D Bloch arrow rotated 180° across the equator!',
+        tryThis: 'Place a second H gate at Step 2 (between Z and M): because H|−⟩ = |1⟩, destructive interference cancels |0⟩ and outputs |1⟩ with 100% probability (H·Z·H = X)!'
     },
     {
-        id: 'lesson_2_superposition',
+        id: 'lesson_2_exam1_basis',
         number: 2,
-        title: '2. Creating Superposition & Interference (H Gate)',
-        badge: 'SUPERPOSITION',
+        title: '2. Ch. 3 & Exam 1: Superposition, Interference & Basis Measurement',
+        badge: 'EXAM 1 SEC. 1',
         numQubits: 1,
         initialStates: ['|0⟩'],
         gates: [
             { id: 'l2_g1', type: 'H', qubit: 0, step: 0 },
-            { id: 'l2_g2', type: 'M', qubit: 0, step: 2 }
+            { id: 'l2_g2', type: 'H', qubit: 0, step: 1 },
+            { id: 'l2_g3', type: 'M', qubit: 0, step: 2 }
         ],
-        conceptTitle: 'Why Superposition is NOT a Classical Coin Flip',
-        explanation: 'Applying the Hadamard (H) gate to |0⟩ creates the equal superposition |+⟩ = (|0⟩ + |1⟩)/√2. By the Born rule, measuring |+⟩ yields 0 with probability |1/√2|² = 50% and 1 with 50%. Unlike a classical random coin that is secretly already Heads or Tails, the qubit holds both amplitudes with a definite phase! Place a second H gate at Step 1: the |1⟩ paths cancel out by destructive interference and the qubit returns to |0⟩ 100% of the time!',
-        tryThis: 'Place a second H gate on wire q0 at Step 1 (before Measurement) and watch the probability of |0⟩ jump from 50% back to 100% due to quantum interference!'
+        conceptTitle: 'Why Superposition is NOT a Classical Coin Flip (H · H = I)',
+        explanation: 'At |ψ₁⟩ = H|0⟩ = (|0⟩ + |1⟩)/√2, measuring in the Z-basis gives 0 or 1 with 50% probability each. But if we do NOT measure at |ψ₁⟩ and instead apply a second H gate, the two paths for |1⟩ (+1/2 and −1/2) cancel by destructive interference: |ψ₂⟩ = H|+⟩ = |0⟩ with 100% certainty!',
+        tryThis: 'Click any ↑ |ψₖ⟩ slice marker along the bottom of the 3D isometric stage to inspect the exact step-by-step algebra for |ψ₀⟩ → |ψ₁⟩ → |ψ₂⟩!'
     },
     {
-        id: 'lesson_3_phase',
+        id: 'lesson_3_bell_hw3_q2',
         number: 3,
-        title: '3. Relative Phase & Radian Rotations (Z, S, T, Rz)',
-        badge: 'PHASE & RADIANS',
-        numQubits: 1,
-        initialStates: ['|0⟩'],
-        gates: [
-            { id: 'l3_g1', type: 'H', qubit: 0, step: 0 },
-            { id: 'l3_g2', type: 'Z', qubit: 0, step: 1 },
-            { id: 'l3_g3', type: 'H', qubit: 0, step: 2 },
-            { id: 'l3_g4', type: 'M', qubit: 0, step: 3 }
-        ],
-        conceptTitle: 'Turning Phase into Measurable Bit Flips (H · Z · H = X)',
-        explanation: 'A Z gate flips the sign of |1⟩ to −|1⟩ (a π radian phase shift). At Step 1, |+⟩ = (|0⟩+|1⟩)/√2 becomes |−⟩ = (|0⟩−|1⟩)/√2. Notice that at Step 1 the probabilities of 0 and 1 are STILL 50% / 50%! Yet the Bloch vector moved from +X to −X. The second H gate at Step 2 converts that hidden π phase difference into a 100% deterministic |1⟩ outcome!',
-        tryThis: 'Replace the Z gate at Step 1 with Rz(θ) and drag the angle slider in radians from 0 to π to watch the interference probabilities shift smoothly as cos²(θ/2) and sin²(θ/2)!'
-    },
-    {
-        id: 'lesson_4_bell',
-        number: 4,
-        title: '4. Quantum Entanglement — The Bell State (H + CNOT)',
-        badge: 'ENTANGLEMENT',
+        title: '3. Ch. 4 & HW3 Q2: Constructing All 4 Bell States (|Φ⁺⟩, |Φ⁻⟩, |Ψ⁺⟩, |Ψ⁻⟩)',
+        badge: 'HW3 PART 1 Q2',
         numQubits: 2,
         initialStates: ['|0⟩', '|0⟩'],
         gates: [
-            { id: 'l4_g1', type: 'H', qubit: 0, step: 0 },
-            { id: 'l4_g2', type: 'CNOT', qubit: 0, targetQubit: 1, step: 1 },
-            { id: 'l4_g3', type: 'M', qubit: 0, step: 2 },
-            { id: 'l4_g4', type: 'M', qubit: 1, step: 2 }
+            { id: 'l3_g1', type: 'H', qubit: 0, step: 0 },
+            { id: 'l3_g2', type: 'CNOT', qubit: 0, targetQubit: 1, step: 1 },
+            { id: 'l3_g3', type: 'M', qubit: 0, step: 2 },
+            { id: 'l3_g4', type: 'M', qubit: 1, step: 2 }
         ],
-        conceptTitle: 'Inseparable Two-Qubit States: |Φ⁺⟩ = (|00⟩ + |11⟩)/√2',
-        explanation: 'First, H puts control qubit q0 into superposition (|0⟩+|1⟩)/√2 while q1 is |0⟩. Next, CNOT flips q1 only when q0 is |1⟩, producing the maximally entangled Bell state |Φ⁺⟩ = (|00⟩ + |11⟩)/√2. Neither qubit has its own independent state anymore (their individual Bloch vectors shrink to length 0 at the center of the sphere!), yet measuring q0 instantly determines q1: they always agree (00 or 11, never 01 or 10).',
-        tryThis: 'Step from t=1 to t=2 and observe how both Bloch spheres transition from pure states (|r|=1) to maximally entangled mixed states (|r|=0, Purity = 0.50).'
+        conceptTitle: 'Entanglement & The Four EPR Bell States',
+        explanation: 'Applying H on q0 and CNOT(q0 → q1) transforms |00⟩ into |Φ⁺⟩ = (|00⟩ + |11⟩)/√2. In the Step-by-Step Math panel on the right, see the formal CSE 4412 Exam 1 proof that ad = bc = 0 contradicts ac = bd = 1/√2, proving |Φ⁺⟩ is inseparable (entangled)!',
+        tryThis: 'Click the initial state pedestals on the left of the 3D stage to change |00⟩ → |10⟩ (gives |Φ⁻⟩), |01⟩ (gives |Ψ⁺⟩), or |11⟩ (gives |Ψ⁻⟩)!'
     },
     {
-        id: 'lesson_5_kickback',
-        number: 5,
-        title: '5. Phase Kickback, CZ & SWAP Routing',
-        badge: 'MULTI-QUBIT',
+        id: 'lesson_4_hw3_q3',
+        number: 4,
+        title: '4. Ch. 4 & HW3 Q3: Evaluating CNOT(H ⊗ H)|+, 0⟩ in the Z Basis',
+        badge: 'HW3 PART 1 Q3',
         numQubits: 2,
-        initialStates: ['|0⟩', '|1⟩'],
+        initialStates: ['|+⟩', '|0⟩'],
         gates: [
-            { id: 'l5_g1', type: 'H', qubit: 0, step: 0 },
-            { id: 'l5_g2', type: 'H', qubit: 1, step: 0 },
-            { id: 'l5_g3', type: 'CNOT', qubit: 0, targetQubit: 1, step: 1 },
-            { id: 'l5_g4', type: 'H', qubit: 0, step: 2 },
-            { id: 'l5_g5', type: 'H', qubit: 1, step: 2 }
+            { id: 'l4_g1', type: 'H', qubit: 0, step: 0 },
+            { id: 'l4_g2', type: 'H', qubit: 1, step: 0 },
+            { id: 'l4_g3', type: 'CNOT', qubit: 0, targetQubit: 1, step: 1 }
         ],
-        conceptTitle: 'How a Target Qubit Kicks Phase Back to the Control Qubit',
-        explanation: 'In classical circuits, a control wire drives a target wire in one direction. In quantum circuits, when both qubits are in the |+⟩ / |−⟩ basis, a CNOT with control q0 and target q1 actually flips the CONTROL qubit q0! This phenomenon—Phase Kickback—powers major quantum algorithms like Deutsch-Jozsa, Grover, and Shor.',
-        tryThis: 'Step through t=0 → t=1 → t=2 → t=3 and watch how q1 ( initialized to |1⟩ ) kicks a −1 phase onto q0 during the CNOT at Step 1!'
+        conceptTitle: 'Step-by-Step Tensor Product Algebra: CNOT(H ⊗ H)|+, 0⟩',
+        explanation: 'From CSE 4412 HW3 Part 1 Q3: Wire q0 starts in |+⟩ and wire q1 starts in |0⟩. At Step 1, (H ⊗ H)|+, 0⟩ = (H|+⟩) ⊗ (H|0⟩) = |0⟩ ⊗ |+⟩ = (|00⟩ + |01⟩)/√2. At Step 2, CNOT acts with control q0 = |0⟩, leaving the state unchanged as (|00⟩ + |01⟩)/√2!',
+        tryThis: 'Check the Step-by-Step Math tab on the right to see the complete algebraic derivation and automatic separability factorization |0⟩ ⊗ |+⟩!'
     },
     {
-        id: 'lesson_6_ghz',
-        number: 6,
-        title: '6. 3-Qubit GHZ State & Shot Noise Statistics',
-        badge: '3-QUBIT GHZ',
+        id: 'lesson_5_teleportation',
+        number: 5,
+        title: '5. Ch. 5 & Exam 1: Quantum Teleportation Protocol (3-Qubit Isometric Stage)',
+        badge: 'TELEPORTATION',
         numQubits: 3,
-        initialStates: ['|0⟩', '|0⟩', '|0⟩'],
+        initialStates: ['|+⟩', '|0⟩', '|0⟩'],
+        gates: [
+            { id: 'l5_g1', type: 'H', qubit: 1, step: 0 },
+            { id: 'l5_g2', type: 'CNOT', qubit: 1, targetQubit: 2, step: 1 },
+            { id: 'l5_g3', type: 'CNOT', qubit: 0, targetQubit: 1, step: 2 },
+            { id: 'l5_g4', type: 'H', qubit: 0, step: 3 },
+            { id: 'l5_g5', type: 'M', qubit: 0, step: 4 },
+            { id: 'l5_g6', type: 'M', qubit: 1, step: 4 }
+        ],
+        conceptTitle: 'Teleporting |ψ⟩ Across an Entangled Bell Pair |Φ⁺⟩',
+        explanation: 'First, H on q1 and CNOT(q1→q2) create the shared Bell pair |Φ⁺⟩ between Alice (q1) and Bob (q2). Next, Alice entangles her payload qubit q0 with q1 via CNOT(q0→q1) and H on q0, then measures q0 and q1 to obtain 2 classical bits (m₀, m₁) that tell Bob which recovery gates Z^(m₀) X^(m₁) to apply!',
+        tryThis: 'Step through t=0 → t=5 on the 3D Isometric Stage and click "🎲 Re-sample" after measurement to see all 4 classical outcomes (00, 01, 10, 11)!'
+    },
+    {
+        id: 'lesson_6_bv_oracle',
+        number: 6,
+        title: '6. Ch. 6 & HW3 Part 2: Bernstein-Vazirani Oracle U_f (s = 01)',
+        badge: 'HW3 PART 2 ORACLE',
+        numQubits: 3,
+        initialStates: ['|0⟩', '|0⟩', '|1⟩'],
         gates: [
             { id: 'l6_g1', type: 'H', qubit: 0, step: 0 },
-            { id: 'l6_g2', type: 'CNOT', qubit: 0, targetQubit: 1, step: 1 },
-            { id: 'l6_g3', type: 'CNOT', qubit: 1, targetQubit: 2, step: 2 },
-            { id: 'l6_g4', type: 'M', qubit: 0, step: 3 },
-            { id: 'l6_g5', type: 'M', qubit: 1, step: 3 },
-            { id: 'l6_g6', type: 'M', qubit: 2, step: 3 }
+            { id: 'l6_g2', type: 'H', qubit: 1, step: 0 },
+            { id: 'l6_g3', type: 'H', qubit: 2, step: 0 },
+            { id: 'l6_g4', type: 'CNOT', qubit: 1, targetQubit: 2, step: 1 },
+            { id: 'l6_g5', type: 'H', qubit: 0, step: 2 },
+            { id: 'l6_g6', type: 'H', qubit: 1, step: 2 },
+            { id: 'l6_g7', type: 'M', qubit: 0, step: 3 },
+            { id: 'l6_g8', type: 'M', qubit: 1, step: 3 }
         ],
-        conceptTitle: 'Multi-Qubit Entanglement & Theoretical vs. Finite Shots',
-        explanation: 'Chaining one Hadamard and two CNOT gates creates the 3-qubit Greenberger–Horne–Zeilinger (GHZ) state: (|000⟩ + |111⟩)/√2. Out of 2³ = 8 possible 3-bit strings, only |000⟩ (50%) and |111⟩ (50%) have non-zero amplitude! On a real quantum processor, we cannot read the statevector directly—we repeat the circuit for N "shots" and build a histogram.',
-        tryThis: 'In the Measurement Histogram panel on the right, switch between 10 shots, 100 shots, and 4096 shots and click "Sample Shots" to see how finite measurements converge toward the exact Born rule probabilities!'
+        conceptTitle: 'Phase Kickback & Finding Secret String s in 1 Query',
+        explanation: 'Top wires q0, q1 are the n=2 query register |00⟩; bottom wire q2 is the ancilla |1⟩. After H⊗³, the ancilla is in |−⟩. The Oracle U_f for s = 01 kicks back (−1)^(x·01), turning |+⟩|+⟩ into |+⟩|−⟩. The final H⊗² decodes |+⟩|−⟩ → |01⟩ = |s⟩ in a single query!',
+        tryThis: 'Click the "🎓 Class Oracle Diagram (U_f)" tab above the stage to view the exact class chalkboard diagram with /ⁿ bundle notation and s = 01 / s = 101!'
     }
 ];
 

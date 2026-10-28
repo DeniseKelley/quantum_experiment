@@ -1580,3 +1580,513 @@ body.circuit-lab-mode #nametags-layer {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* ============================================================================
+   7. 3-MODE STAGE TABS, ISOMETRIC 3D BLOCH STAGE, ORACLE DIAGRAM & MATH WORKBOOK
+   ============================================================================ */
+.qcl-stage-mode-tabs {
+    display: flex;
+    gap: 5px;
+    background: #f1f3f4;
+    padding: 4px;
+    border-radius: 999px;
+}
+
+.qcl-stage-mode-btn {
+    padding: 6px 13px;
+    border-radius: 999px;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: #5f6368;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 150ms var(--ease-out-strong);
+}
+
+.qcl-stage-mode-btn:hover {
+    color: #202124;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.qcl-stage-mode-btn.active {
+    background: #1a73e8;
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(26, 115, 232, 0.28);
+}
+
+.qcl-stage-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.qcl-isometric-stage-card {
+    padding: 12px 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
+}
+
+.qcl-isometric-stage-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.qcl-iso-stage-svg {
+    width: 100%;
+    max-height: 295px;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
+}
+
+.leg-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+.leg-cyan { background: #38bdf8; }
+.leg-gold { background: #fbbc04; }
+.leg-purple { background: #a855f7; }
+
+.iso-clickable-pedestal:hover circle,
+.iso-placed-gate-group:hover rect,
+.iso-placed-gate-group:hover circle,
+.iso-slice-marker-group:hover rect,
+.iso-empty-slot:hover ellipse {
+    filter: brightness(1.18);
+}
+
+/* ============================================================================
+   8. TEXTBOOK MATHEMATICAL FORMATTING (Stacked Fractions, Bras, Kets & Proofs)
+   ============================================================================ */
+.m-frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 2px;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 0.92em;
+    line-height: 1.05;
+}
+
+.m-num {
+    border-bottom: 1.4px solid currentColor;
+    padding: 0 3px 1px 3px;
+    font-weight: 700;
+}
+
+.m-den {
+    padding: 1px 3px 0 3px;
+    font-weight: 700;
+}
+
+.m-ket,
+.m-bra,
+.m-braket,
+.m-outer {
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-weight: 800;
+    color: #1967d2;
+    padding: 0 1px;
+}
+
+.m-boxed {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 7px;
+    background: #e8f0fe;
+    border: 1.5px solid #4285f4;
+    color: #174ea6;
+    font-weight: 800;
+}
+
+.m-born-chip {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #e6f4ea;
+    border: 1px solid #a8dab5;
+    color: #137333;
+    margin-right: 4px;
+    margin-top: 3px;
+}
+
+/* Live Step-by-Step Derivation Cards in Right Column */
+.qcl-step-derivation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.qcl-deriv-step-card {
+    background: #f8fafd;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.qcl-deriv-step-card:hover {
+    border-color: #93c5fd;
+    background: #ffffff;
+}
+
+.qcl-deriv-step-card.active-deriv-step {
+    background: #ffffff;
+    border-color: #1a73e8;
+    box-shadow: 0 4px 14px rgba(26, 115, 232, 0.14);
+}
+
+.qcl-deriv-card-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 4px;
+}
+
+.qcl-deriv-slice-pill {
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: #1a73e8;
+    color: #ffffff;
+}
+
+.qcl-deriv-card-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: #202124;
+}
+
+.qcl-deriv-rule {
+    font-size: 10.2px;
+    color: #4b5563;
+    line-height: 1.38;
+    margin-bottom: 5px;
+}
+
+.qcl-deriv-algebra-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #1a73e8;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: #1f2937;
+    overflow-x: auto;
+}
+
+.qcl-deriv-eq-line + .qcl-deriv-eq-line {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px dashed #e5e7eb;
+}
+
+/* Entanglement / Separability Proof Card */
+.qcl-proof-card {
+    border-radius: 10px;
+    padding: 9px 11px;
+    font-size: 10.8px;
+    line-height: 1.42;
+}
+
+.qcl-proof-card.proof-entangled {
+    background: #ecfdf5;
+    border: 1.5px solid #10b981;
+    color: #065f46;
+}
+
+.qcl-proof-card.proof-separable {
+    background: #f0f9ff;
+    border: 1.5px solid #38bdf8;
+    color: #0c4a6e;
+}
+
+.qcl-proof-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    margin-bottom: 5px;
+}
+
+.qcl-proof-step-line + .qcl-proof-step-line {
+    margin-top: 4px;
+}
+
+/* ============================================================================
+   9. CLASS ORACLE & ALGORITHM DIAGRAM STAGE (scene7_quantum_alg.png)
+   ============================================================================ */
+.qcl-oracle-stage-card,
+.qcl-chapters-workbook-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.qcl-oracle-header,
+.qcl-workbook-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.qcl-oracle-preset-pills,
+.qcl-chapter-Selector-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.active-preset-chip {
+    background: #e8f0fe !important;
+    border-color: #1a73e8 !important;
+    color: #1a73e8 !important;
+}
+
+.qcl-oracle-svg-wrap {
+    width: 100%;
+}
+
+.qcl-oracle-svg {
+    width: 100%;
+    max-height: 245px;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.2);
+}
+
+.qcl-oracle-body-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 12px;
+}
+
+.qcl-oracle-derivation-panel,
+.qcl-oracle-truth-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.qcl-oracle-slice-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+}
+
+.qcl-oracle-slice-tab {
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1.5px solid #dadce0;
+    background: #f8f9fa;
+    color: #3c4043;
+    font-size: 10.5px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.qcl-oracle-slice-tab.active {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: #ffffff;
+}
+
+.qcl-oracle-active-slice-box {
+    background: #f8fafd;
+    border: 1.5px solid #4285f4;
+    border-radius: 12px;
+    padding: 10px 13px;
+}
+
+.qcl-oracle-slice-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #1a73e8;
+    margin-bottom: 5px;
+}
+
+.qcl-oracle-main-eq {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 11px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 7px;
+}
+
+.qcl-oracle-steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: #334155;
+}
+
+.qcl-oracle-all-slices-summary {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.qcl-oracle-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 7px;
+    background: #f8f9fa;
+    cursor: pointer;
+    font-size: 11.5px;
+}
+
+.qcl-oracle-summary-row.active-row {
+    background: #e8f0fe;
+    border: 1px solid #4285f4;
+}
+
+.qcl-osr-tag {
+    font-family: 'Georgia', serif;
+    font-weight: 800;
+    color: #1a73e8;
+    min-width: 34px;
+}
+
+/* ============================================================================
+   10. COURSE CHAPTERS & HW WORKBOOK VIEW
+   ============================================================================ */
+.qcl-workbook-summary {
+    font-size: 12px;
+    line-height: 1.48;
+    color: #3c4043;
+    background: #f8fafd;
+    border-left: 4px solid #1a73e8;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.qcl-workbook-formulas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 8px;
+}
+
+.qcl-wb-formula-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-top: 3px solid #1a73e8;
+    border-radius: 10px;
+    padding: 8px 11px;
+}
+
+.qcl-wb-formula-name {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #5f6368;
+    margin-bottom: 4px;
+}
+
+.qcl-wb-formula-eq {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.5;
+}
+
+.qcl-workbook-examples-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.qcl-wb-example-card {
+    background: #f8fafd;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.qcl-wb-ex-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.qcl-wb-ex-title {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #202124;
+    margin-top: 4px;
+}
+
+.qcl-wb-problem-box {
+    background: #fef7e0;
+    border: 1px solid #fbbc04;
+    border-radius: 8px;
+    padding: 7px 11px;
+    font-size: 11.8px;
+    color: #3c4043;
+    line-height: 1.42;
+}
+
+.qcl-wb-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.qcl-wb-step-row {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 3.5px solid #34a853;
+    border-radius: 8px;
+    padding: 8px 11px;
+}
+
+.qcl-wb-step-badge {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #137333;
+    margin-bottom: 3px;
+}
+
+.qcl-wb-step-math {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 4px 0;
+    line-height: 1.55;
+}
+
+.qcl-wb-step-note {
+    font-size: 11px;
+    color: #5f6368;
+    line-height: 1.38;
+}

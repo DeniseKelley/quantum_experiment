@@ -13,8 +13,17 @@ class QuantumCircuitLabUI {
     constructor(app) {
         this.app = app;
         this.isLabActive = false;
-        this.showFormalMath = false;
-        this.activeRightTab = 'bloch'; // 'bloch' | 'shots' | 'math'
+        this.showFormalMath = true; // Default open so step-by-step math is immediately visible!
+        this.activeRightTab = 'math'; // Default to Step-by-Step Math tab!
+        this.activeStageMode = 'isometric'; // 'isometric' | 'oracle' | 'chapters'
+
+        // Oracle diagram state (for Class Oracle U_f section)
+        this.activeOraclePresetId = 'bv_s01';
+        this.activeOracleSliceIdx = 2; // 0: |ψ0⟩, 1: |ψ1⟩, 2: |ψ2⟩, 3: |ψ3⟩
+        this.customSecretString = '01';
+
+        // Course chapters workbook state
+        this.activeChapterIndex = 0;
 
         // Circuit state
         this.numQubits = 2;
@@ -53,7 +62,7 @@ class QuantumCircuitLabUI {
 
         this.buildDOM();
         this.bindEvents();
-        this.loadLesson(0, false);
+        this.loadLesson(2, false); // Start on Bell State / Entanglement by default so 2-qubit 3D spheres shine
         this.startBlochAnimationLoop();
     }
 
@@ -61,7 +70,6 @@ class QuantumCircuitLabUI {
      * Maps complex phase angle in radians (-π .. π) to Google-inspired friendly colors
      */
     static phaseToColor(phaseRad) {
-        // 0 rad -> Google Blue (#1a73e8), +π/2 -> Google Green (#34a853), π -> Google Red (#ea4335), -π/2 -> Google Yellow/Purple
         let deg = ((phaseRad * 180) / Math.PI) % 360;
         if (deg < 0) deg += 360;
         if (deg < 45 || deg >= 315) return '#1a73e8'; // +1 (0 rad): Google Blue
@@ -88,9 +96,9 @@ class QuantumCircuitLabUI {
                 <span class="mode-tab-dot dot-multi"></span>
                 <span class="mode-tab-text">
                     <span class="mode-tab-title">Quantum Circuit Lab</span>
-                    <span class="mode-tab-sub">Interactive Chip &amp; Circuit Builder</span>
+                    <span class="mode-tab-sub">3D Bloch Stage, Oracles &amp; Class Math</span>
                 </span>
-                <span class="mode-tab-pill">Hands-On</span>
+                <span class="mode-tab-pill">CSE 4412 + 3D</span>
             </button>
         `;
         document.body.appendChild(modeSwitcher);
@@ -116,10 +124,10 @@ class QuantumCircuitLabUI {
         labRoot.setAttribute('aria-label', 'Quantum Circuit Lab Interactive Workspace');
 
         labRoot.innerHTML = `
-            <!-- Main 3-Column Light Workbench Layout (Modeled after learn-arduino-red.vercel.app) -->
+            <!-- Main 3-Column Light Workbench Layout -->
             <div class="qcl-main-grid">
 
-                <!-- LEFT COLUMN: Guided Lesson Stepper + Physical Gate Components Tray -->
+                <!-- LEFT COLUMN: Guided Course Lessons + Quantum Gate Palette -->
                 <aside class="qcl-card qcl-left-col">
                     <!-- Compact Guided Lesson Card -->
                     <div class="qcl-lesson-box">
@@ -143,7 +151,7 @@ class QuantumCircuitLabUI {
                     <div class="qcl-parts-section">
                         <div class="qcl-section-header">
                             <h3 class="qcl-card-title">Quantum Gate Parts</h3>
-                            <span class="qcl-subtle-hint">Click or drag to wire</span>
+                            <span class="qcl-subtle-hint">Click or drag onto stage</span>
                         </div>
                         <div class="qcl-palette-groups" id="qcl-palette-groups"></div>
                     </div>
@@ -152,31 +160,32 @@ class QuantumCircuitLabUI {
                     <div class="qcl-gate-inspector" id="qcl-gate-inspector"></div>
                 </aside>
 
-                <!-- CENTER STAGE: Physical Quantum Chip Workbench + Live Coaxial Circuit Composer -->
+                <!-- CENTER STAGE: 3-Mode Interactive Visual Stage (Isometric 3D Bloch Stage | Class Oracle U_f | Course Chapters Workbook) -->
                 <main class="qcl-center-col">
-                    <!-- Top Toolbar: Add/Remove Qubits, Presets, Undo/Redo, Reset -->
+                    <!-- Top Stage Mode Switcher & Circuit Toolbar -->
                     <div class="qcl-card qcl-workbench-toolbar">
-                        <div class="qcl-toolbar-group">
-                            <span class="qcl-group-title">QPU Qubits</span>
-                            <button class="qcl-btn qcl-btn-blue" id="qcl-add-qubit" title="Add a physical Transmon Qubit to the chip (up to 4)">+ Add Qubit</button>
-                            <button class="qcl-btn" id="qcl-remove-qubit" title="Remove bottom Transmon Qubit">− Remove</button>
-                            <span class="qcl-chip-status-pill" id="qcl-qubit-count-pill">2 Transmons Active</span>
-                        </div>
-
-                        <div class="qcl-toolbar-group">
-                            <span class="qcl-group-title">Quick Circuits</span>
-                            <button class="qcl-btn qcl-btn-chip" id="qcl-preset-bell">Bell State |Φ⁺⟩</button>
-                            <button class="qcl-btn qcl-btn-chip" id="qcl-preset-ghz">3Q GHZ State</button>
-                            <button class="qcl-btn qcl-btn-chip" id="qcl-preset-interf">H·Z·H Interference</button>
-                        </div>
-
-                        <div class="qcl-toolbar-group">
-                            <button class="qcl-btn" id="qcl-undo-btn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
-                            <button class="qcl-btn" id="qcl-redo-btn" title="Redo (Ctrl+Y)" disabled>↷ Redo</button>
-                            <button class="qcl-btn qcl-btn-red-outline" id="qcl-clear-btn" title="Reset circuit to |0...0⟩">⟲ Reset</button>
-                            <button class="qcl-btn qcl-btn-3d-jump" id="qcl-view-in-3d" title="Inspect where this chip sits inside the 3D cryostat">
-                                🔬 See Chip in 3D Cryostat
+                        <div class="qcl-stage-mode-tabs" role="tablist" aria-label="Visual Stage Mode">
+                            <button class="qcl-stage-mode-btn active" data-stage-mode="isometric" id="qcl-mode-isometric">
+                                ✨ 3D Isometric Bloch Stage
                             </button>
+                            <button class="qcl-stage-mode-btn" data-stage-mode="oracle" id="qcl-mode-oracle">
+                                🎓 Class Oracle Diagram (U<sub>f</sub>)
+                            </button>
+                            <button class="qcl-stage-mode-btn" data-stage-mode="chapters" id="qcl-mode-chapters">
+                                📖 Course Chapters &amp; HW Math
+                            </button>
+                        </div>
+
+                        <div class="qcl-toolbar-group" id="qcl-circuit-action-group">
+                            <button class="qcl-btn qcl-btn-blue" id="qcl-add-qubit" title="Add a Qubit Wire & 3D Bloch Pedestal (up to 4)">+ Add Qubit</button>
+                            <button class="qcl-btn" id="qcl-remove-qubit" title="Remove bottom Qubit Wire">− Remove</button>
+                            <span class="qcl-chip-status-pill" id="qcl-qubit-count-pill">2 Qubits</span>
+                            <button class="qcl-btn qcl-btn-chip" id="qcl-preset-bell" title="Bell State |Φ⁺⟩ (HW3 Q2)">Bell |Φ⁺⟩</button>
+                            <button class="qcl-btn qcl-btn-chip" id="qcl-preset-teleport" title="3-Qubit Quantum Teleportation Protocol">Teleportation</button>
+                            <button class="qcl-btn qcl-btn-chip" id="qcl-preset-interf" title="HW3 Q3: CNOT(H⊗H)|+,0⟩">HW3 Q3</button>
+                            <button class="qcl-btn" id="qcl-undo-btn" title="Undo (Ctrl+Z)" disabled>↶</button>
+                            <button class="qcl-btn" id="qcl-redo-btn" title="Redo (Ctrl+Y)" disabled>↷</button>
+                            <button class="qcl-btn qcl-btn-red-outline" id="qcl-clear-btn" title="Reset circuit to |0...0⟩">⟲ Reset</button>
                         </div>
                     </div>
 
@@ -187,112 +196,150 @@ class QuantumCircuitLabUI {
                         <button class="qcl-val-close" id="qcl-validation-close">&times;</button>
                     </div>
 
-                    <!-- PART 1 OF CENTER STAGE: Interactive Physical Superconducting Quantum Processor Board -->
-                    <div class="qcl-card qcl-physical-chip-card">
-                        <div class="qcl-chip-card-header">
-                            <div>
-                                <span class="qcl-eyebrow-tag">PHYSICAL QUANTUM PROCESSOR BENCH (10 mK WILLOW / SYCAMORE QPU)</span>
-                                <h3 class="qcl-card-title">Live Superconducting Transmon Qubits, Coax Drive Lines &amp; Readout Resonators</h3>
+                    <!-- MODE 1: Microsoft Teleportation-Style Isometric 3D Bloch Pedestal & Circuit Stage -->
+                    <div id="qcl-stage-pane-isometric" class="qcl-stage-pane">
+                        <div class="qcl-card qcl-isometric-stage-card">
+                            <div class="qcl-chip-card-header">
+                                <div>
+                                    <span class="qcl-eyebrow-tag">INTERACTIVE 3D ISOMETRIC BLOCH SPHERE &amp; CIRCUIT STAGE (CLICK ANY WIRE SLOT OR ↑ |ψₖ⟩ SLICE)</span>
+                                    <h3 class="qcl-card-title">Glowing 3D Bloch Sphere Pedestals, Standing Isometric Gates &amp; State Slice Evolution</h3>
+                                </div>
+                                <div class="qcl-chip-legend">
+                                    <span class="chip-leg-item"><i class="leg-dot leg-cyan"></i> Left Pedestal: Click to Cycle Init State</span>
+                                    <span class="chip-leg-item"><i class="leg-dot leg-gold"></i> Wire Pad (+): Click to Place Selected Gate</span>
+                                    <span class="chip-leg-item"><i class="leg-dot leg-purple"></i> Slice ↑ |ψₖ⟩: Click to Inspect Step Algebra</span>
+                                </div>
                             </div>
-                            <div class="qcl-chip-legend">
-                                <span class="chip-leg-item"><i class="leg-line leg-green"></i> XY Microwave Gate Line</span>
-                                <span class="chip-leg-item"><i class="leg-line leg-blue"></i> Z Flux Phase Line</span>
-                                <span class="chip-leg-item"><i class="leg-line leg-yellow"></i> λ/4 Readout Resonator</span>
-                                <span class="chip-leg-item"><i class="leg-line leg-coupler"></i> Tunable Coupler</span>
-                            </div>
+
+                            <!-- Interactive Isometric 3D Stage SVG -->
+                            <div class="qcl-isometric-stage-wrap" id="qcl-physical-chip-stage"></div>
                         </div>
 
-                        <!-- Interactive SVG Physical QPU Package & Transmon Chip -->
-                        <div class="qcl-physical-chip-stage" id="qcl-physical-chip-stage">
-                            <!-- Rendered dynamically as a detailed interactive SVG hardware board -->
+                        <!-- Compact Synchronized Circuit Grid & Timeline Scrubber -->
+                        <div class="qcl-card qcl-composer-card">
+                            <div class="qcl-composer-header-row">
+                                <div>
+                                    <span class="qcl-eyebrow-tag">SYNCHRONIZED GATE TIMELINE &amp; SLICE SCRUBBER</span>
+                                    <h3 class="qcl-card-title">Drag-and-Drop Gate Sequencer &amp; Classical Readout Bus</h3>
+                                </div>
+
+                                <!-- Selected Wire Gate Action Bar -->
+                                <div class="qcl-placed-gate-bar" id="qcl-placed-gate-bar" style="display: none;">
+                                    <span class="qcl-pgb-title" id="qcl-pgb-title">Selected Gate</span>
+                                    <div class="qcl-pgb-actions">
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-left" title="Move left">←</button>
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-right" title="Move right">→</button>
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-up" title="Move up">↑</button>
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-down" title="Move down">↓</button>
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-flip" style="display:none;">⇅ Flip Control/Target</button>
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-cycle-target" style="display:none;">🎯 Target Wire</button>
+                                        <button class="qcl-btn qcl-btn-xs qcl-btn-red-outline" id="qcl-pgb-delete">🗑 Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="qcl-circuit-board-wrap">
+                                <div class="qcl-circuit-board" id="qcl-circuit-board"></div>
+                            </div>
+
+                            <div class="qcl-timeline-bar">
+                                <div class="qcl-exec-controls">
+                                    <button class="qcl-btn qcl-btn-sm" id="qcl-step-start" title="Reset to Initial State |ψ₀⟩ (t=0)">⏮ |ψ₀⟩</button>
+                                    <button class="qcl-btn qcl-btn-sm" id="qcl-step-prev" title="Previous Slice">⏪ Prev</button>
+                                    <button class="qcl-btn qcl-btn-green-play" id="qcl-run-circuit" title="Animate step-by-step across the 3D Bloch stage">▶ Run Circuit</button>
+                                    <button class="qcl-btn qcl-btn-sm" id="qcl-step-next" title="Next Slice">Next ⏩</button>
+                                    <button class="qcl-btn qcl-btn-sm" id="qcl-step-end" title="Jump to Final Slice">⏭ End</button>
+                                </div>
+                                <div class="qcl-timeline-steps" id="qcl-timeline-steps"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- PART 2 OF CENTER STAGE: Tactile Coaxial Pulse Sequence & Quantum Circuit Composer -->
-                    <div class="qcl-card qcl-composer-card">
-                        <div class="qcl-composer-header-row">
-                            <div>
-                                <span class="qcl-eyebrow-tag">PULSE SEQUENCE &amp; CIRCUIT SCHEMATIC</span>
-                                <h3 class="qcl-card-title">Coaxial Waveguide Channels &amp; Gate Operations</h3>
-                            </div>
+                    <!-- MODE 2: Dedicated Class Oracle & Algorithm Diagram Section (scene7_quantum_alg.png / HW3 Part Two) -->
+                    <div id="qcl-stage-pane-oracle" class="qcl-stage-pane" style="display: none;">
+                        <div class="qcl-card qcl-oracle-stage-card" id="qcl-oracle-stage-container"></div>
+                    </div>
 
-                            <!-- Selected Wire Gate Action Bar (appears when clicking a placed gate) -->
-                            <div class="qcl-placed-gate-bar" id="qcl-placed-gate-bar" style="display: none;">
-                                <span class="qcl-pgb-title" id="qcl-pgb-title">Selected Gate</span>
-                                <div class="qcl-pgb-actions">
-                                    <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-left" title="Move left">←</button>
-                                    <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-right" title="Move right">→</button>
-                                    <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-up" title="Move up">↑</button>
-                                    <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-down" title="Move down">↓</button>
-                                    <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-flip" style="display:none;">⇅ Flip Control/Target</button>
-                                    <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-cycle-target" style="display:none;">🎯 Target Wire</button>
-                                    <button class="qcl-btn qcl-btn-xs qcl-btn-red-outline" id="qcl-pgb-delete">🗑 Remove</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Visual Circuit Board -->
-                        <div class="qcl-circuit-board-wrap">
-                            <div class="qcl-circuit-board" id="qcl-circuit-board"></div>
-                        </div>
-
-                        <!-- Execution Controls & Step Timeline Scrubber -->
-                        <div class="qcl-timeline-bar">
-                            <div class="qcl-exec-controls">
-                                <button class="qcl-btn qcl-btn-sm" id="qcl-step-start" title="Reset to Initial State (t=0)">⏮ t=0</button>
-                                <button class="qcl-btn qcl-btn-sm" id="qcl-step-prev" title="Step Backward">⏪ Step</button>
-                                <button class="qcl-btn qcl-btn-green-play" id="qcl-run-circuit" title="Run pulse sequence across the chip">▶ Run Circuit</button>
-                                <button class="qcl-btn qcl-btn-sm" id="qcl-step-next" title="Step Forward">Step ⏩</button>
-                                <button class="qcl-btn qcl-btn-sm" id="qcl-step-end" title="Jump to Final State">⏭ End</button>
-                            </div>
-                            <div class="qcl-timeline-steps" id="qcl-timeline-steps"></div>
-                        </div>
+                    <!-- MODE 3: Course Chapters, HW2 / HW3 & Exam 1 Step-by-Step Math Workbook -->
+                    <div id="qcl-stage-pane-chapters" class="qcl-stage-pane" style="display: none;">
+                        <div class="qcl-card qcl-chapters-workbook-card" id="qcl-chapters-workbook-container"></div>
                     </div>
                 </main>
 
-                <!-- RIGHT COLUMN: Clean Tabbed Inspector (One focused view at a time!) -->
+                <!-- RIGHT COLUMN: Live Step-by-Step Math Derivation, Bloch Spheres & Readout Shots -->
                 <aside class="qcl-card qcl-right-col">
-                    <!-- Live State Summary Banner (Always visible at top of right card) -->
+                    <!-- Live State Summary Banner -->
                     <div class="qcl-live-state-summary">
                         <div class="qcl-lss-top">
-                            <span class="qcl-eyebrow-tag" id="qcl-step-eyebrow">STATE AT STEP t = 2</span>
+                            <span class="qcl-eyebrow-tag" id="qcl-step-eyebrow">SLICE |ψ₂⟩ (STEP t = 2)</span>
                             <span class="qcl-classification-badge" id="qcl-classification-badge">Separable State</span>
                         </div>
                         <div class="qcl-lss-op" id="qcl-step-op-title">Active Statevector</div>
                         <div class="qcl-dirac-pill">
-                            <span class="qcl-dirac-lhs">|ψ<sub id="qcl-dirac-sub">t</sub>⟩ =</span>
-                            <code class="qcl-dirac-ket" id="qcl-dirac-ket">1|00⟩</code>
+                            <span class="qcl-dirac-lhs">|ψ<sub id="qcl-dirac-sub">2</sub>⟩ =</span>
+                            <div class="qcl-dirac-ket" id="qcl-dirac-ket">1|00⟩</div>
                             <button class="qcl-btn qcl-btn-xs" id="qcl-reroll-collapse" style="display:none;" title="Re-sample projective measurement collapse">
                                 🎲 Re-sample
                             </button>
                         </div>
                     </div>
 
-                    <!-- Clean 3-Tab Switcher (Like learn-arduino-red.vercel.app's right card tabs) -->
+                    <!-- 3-Tab Switcher (Defaulting to Step-by-Step Math!) -->
                     <div class="qcl-inspector-tabs" role="tablist">
-                        <button class="qcl-insp-tab active" data-tab="bloch" role="tab" aria-selected="true">
-                            🌐 Bloch Spheres
+                        <button class="qcl-insp-tab active" data-tab="math" role="tab" aria-selected="true">
+                            📐 Step-by-Step Math
+                        </button>
+                        <button class="qcl-insp-tab" data-tab="bloch" role="tab" aria-selected="false">
+                            🌐 3D Bloch Spheres
                         </button>
                         <button class="qcl-insp-tab" data-tab="shots" role="tab" aria-selected="false">
-                            📊 Readout Shots
-                        </button>
-                        <button class="qcl-insp-tab" data-tab="math" role="tab" aria-selected="false">
-                            📐 Math &amp; State
+                            📊 Born Shots
                         </button>
                     </div>
 
-                    <!-- TAB 1: Bloch Spheres View -->
-                    <div class="qcl-tab-pane active" id="qcl-tab-bloch">
+                    <!-- TAB 1 (DEFAULT): Live Step-by-Step Algebraic Derivation & Entanglement Proof -->
+                    <div class="qcl-tab-pane active" id="qcl-tab-math">
+                        <div class="qcl-math-header-row">
+                            <span class="qcl-pane-subtitle">Live Algebraic Derivation <strong id="qcl-ket-order-label">|q0 q1⟩</strong></span>
+                            <button class="qcl-btn qcl-btn-xs qcl-btn-math-toggle active" id="qcl-toggle-math" aria-pressed="true">
+                                <span id="qcl-toggle-math-label">Matrix &amp; Table ▲</span>
+                            </button>
+                        </div>
+
+                        <!-- Step-by-Step Slice Derivation Cards (|ψ₀⟩ → |ψ₁⟩ → |ψ₂⟩ ...) -->
+                        <div class="qcl-step-derivation-list" id="qcl-step-derivation-list"></div>
+
+                        <!-- Automatic CSE 4412 Exam 1 Separability / Entanglement Proof Box -->
+                        <div class="qcl-entanglement-proof-box" id="qcl-entanglement-proof-box"></div>
+
+                        <!-- Complex Amplitude Cards -->
+                        <div class="qcl-amplitudes-grid" id="qcl-amplitudes-grid"></div>
+
+                        <!-- Formal Linear Algebra Drawer -->
+                        <div class="qcl-formal-math-drawer" id="qcl-formal-math-drawer">
+                            <div class="qcl-math-card">
+                                <div class="qcl-math-card-title">Unitary Gate Matrix &amp; Transformation</div>
+                                <div id="qcl-math-matrix-content"></div>
+                            </div>
+                            <div class="qcl-math-card">
+                                <div class="qcl-math-card-title">Complex Amplitudes &amp; Born Rule Table</div>
+                                <div class="qcl-math-table-wrap" id="qcl-math-table-wrap"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Interactive Drag-to-Rotate 3D Bloch Spheres -->
+                    <div class="qcl-tab-pane" id="qcl-tab-bloch" style="display: none;">
                         <div class="qcl-pane-header">
                             <span class="qcl-pane-subtitle">Single-Qubit Vectors (Drag sphere to rotate 3D view)</span>
                         </div>
                         <div class="qcl-bloch-grid" id="qcl-bloch-grid"></div>
                         <div class="qcl-friendly-note">
-                            <strong>Tip:</strong> Pure qubit states sit on the sphere surface (<code>|r| = 1</code>). When two qubits become <strong>entangled</strong>, each individual qubit's vector shrinks inside the sphere (<code>|r| &lt; 1</code>)!
+                            <strong>Exam 1 &amp; Ch. 3.5 Note:</strong> Pure single-qubit states lie on the sphere surface (<code>|r| = 1</code>, Tr(ρ²) = 1). When two qubits are <strong>entangled</strong>, tracing out one qubit leaves the other in a mixed state inside the sphere (<code>|r| &lt; 1</code>, ρ = ½I for Bell states)!
                         </div>
                     </div>
 
-                    <!-- TAB 2: Readout Probabilities & Measurement Shots Histogram -->
+                    <!-- TAB 3: Readout Probabilities & Measurement Shots Histogram -->
                     <div class="qcl-tab-pane" id="qcl-tab-shots" style="display: none;">
                         <div class="qcl-shots-controls">
                             <span class="qcl-group-title">Shots (N):</span>
@@ -307,7 +354,7 @@ class QuantumCircuitLabUI {
                         </div>
 
                         <div class="qcl-histogram-legend">
-                            <span><i class="hist-swatch hist-swatch-theory"></i> Exact Born Rule |α|²</span>
+                            <span><i class="hist-swatch hist-swatch-theory"></i> Exact Born Rule |⟨x|ψ⟩|²</span>
                             <span><i class="hist-swatch hist-swatch-shots"></i> Sampled (<span id="qcl-hist-shot-label">1024</span> shots)</span>
                         </div>
 
@@ -317,34 +364,6 @@ class QuantumCircuitLabUI {
                             With N = 1024 shots, statistical sampling noise is ~1/√1024 ≈ ±3.1% around the exact Born-rule probabilities.
                         </div>
                     </div>
-
-                    <!-- TAB 3: Statevector Amplitudes & "Show the Math" Formal Layer -->
-                    <div class="qcl-tab-pane" id="qcl-tab-math" style="display: none;">
-                        <div class="qcl-math-header-row">
-                            <span class="qcl-pane-subtitle">Basis States <strong id="qcl-ket-order-label">|q0 q1⟩</strong></span>
-                            <button class="qcl-btn qcl-btn-xs qcl-btn-math-toggle" id="qcl-toggle-math" aria-pressed="false">
-                                <span id="qcl-toggle-math-label">Show Formal Math ▼</span>
-                            </button>
-                        </div>
-
-                        <!-- Complex Amplitude Cards -->
-                        <div class="qcl-amplitudes-grid" id="qcl-amplitudes-grid"></div>
-
-                        <!-- Formal Linear Algebra Drawer -->
-                        <div class="qcl-formal-math-drawer" id="qcl-formal-math-drawer" style="display: none;">
-                            <div class="qcl-math-card">
-                                <div class="qcl-math-card-title">Unitary Gate Matrix &amp; Transformation</div>
-                                <div id="qcl-math-matrix-content"></div>
-                            </div>
-                            <div class="qcl-math-card">
-                                <div class="qcl-math-card-title">Complex Amplitudes &amp; Born Rule Table</div>
-                                <div class="qcl-math-table-wrap" id="qcl-math-table-wrap"></div>
-                            </div>
-                            <div class="qcl-friendly-note">
-                                <strong>Superposition ≠ Classical Coin Flip:</strong> A classical coin has only positive probabilities. Quantum states carry complex phases <code>e^(iφ)</code> in radians that can constructively add or destructively cancel before measurement!
-                            </div>
-                        </div>
-                    </div>
                 </aside>
             </div>
         `;
@@ -352,6 +371,30 @@ class QuantumCircuitLabUI {
         document.body.appendChild(labRoot);
         this.renderPalette();
         this.renderLessonSelector();
+        this.renderClassOracleStage();
+        this.renderCourseChaptersWorkbook();
+    }
+
+    switchStageMode(mode) {
+        this.activeStageMode = mode;
+        document.querySelectorAll('.qcl-stage-mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.stageMode === mode);
+        });
+        ['isometric', 'oracle', 'chapters'].forEach(m => {
+            const pane = document.getElementById(`qcl-stage-pane-${m}`);
+            if (pane) pane.style.display = m === mode ? 'flex' : 'none';
+        });
+        const actionGroup = document.getElementById('qcl-circuit-action-group');
+        if (actionGroup) {
+            actionGroup.style.display = mode === 'isometric' ? 'flex' : 'none';
+        }
+        if (mode === 'oracle') {
+            this.renderClassOracleStage();
+        } else if (mode === 'chapters') {
+            this.renderCourseChaptersWorkbook();
+        } else {
+            this.refreshAll();
+        }
     }
 
     renderLessonSelector() {
@@ -372,9 +415,9 @@ class QuantumCircuitLabUI {
         if (!container) return;
 
         const groups = [
-            { title: 'Superposition & Flips', keys: ['H', 'X', 'Y', 'Z'] },
+            { title: 'Superposition & Pauli Flips', keys: ['H', 'X', 'Y', 'Z'] },
             { title: 'Phase & Radian Rotations', keys: ['S', 'T', 'Rx', 'Ry', 'Rz'] },
-            { title: '2-Qubit Couplers & Readout', keys: ['CNOT', 'CZ', 'SWAP', 'M'] }
+            { title: '2-Qubit Entanglers & Readout', keys: ['CNOT', 'CZ', 'SWAP', 'M'] }
         ];
 
         container.innerHTML = groups
@@ -394,7 +437,7 @@ class QuantumCircuitLabUI {
                                     style="--gate-color: ${g.color};"
                                     title="${g.name}: ${g.tagline}">
                                 <span class="qcl-chip-sym">${g.symbol}</span>
-                                <span class="qcl-chip-sub">${g.hasTheta ? 'θ rad' : g.numQubits === 2 ? '2Q' : g.id === 'M' ? 'Read' : '1Q'}</span>
+                                <span class="qcl-chip-sub">${g.hasTheta ? 'θ rad' : g.numQubits === 2 ? '2Q' : g.id === 'M' ? 'Meter' : '1Q'}</span>
                             </button>
                         `;
                         })
@@ -413,6 +456,10 @@ class QuantumCircuitLabUI {
                 this.updatePaletteSelectionUI();
                 this.renderGateInspector();
                 this.renderCircuitBoard();
+                if (this.lastSimResult) {
+                    const activeSnap = this.lastSimResult.snapshots[this.activeStepIndex];
+                    this.renderPhysicalQuantumChip(activeSnap);
+                }
             });
 
             btn.addEventListener('dragstart', e => {
@@ -438,198 +485,350 @@ class QuantumCircuitLabUI {
     }
 
     /**
-     * Renders the Interactive Physical Superconducting Quantum Processor Board (SVG)
-     * Modeled directly after Google Sycamore/Willow flip-chip carrier & Xmon cross-shaped transmon qubits.
+     * Helper to draw a gorgeous 3D Translucent Bloch Sphere on a Glowing Ring Pedestal in SVG
+     * Inspired directly by Microsoft's Quantum Teleportation illustration (ms_teleportation.jpg)!
+     */
+    renderSVGBlochPedestal(cx, cy, radius, bloch, labelTop, labelBottom, isInteractiveInit = false, qubitIndex = 0) {
+        const rx = bloch ? bloch.rx : 0;
+        const ry = bloch ? bloch.ry : 0;
+        const rz = bloch ? bloch.rz : 1;
+        const isEntangled = bloch ? bloch.isEntangled : false;
+
+        // Isometric 3D projection of Bloch vector (x = front-left, y = front-right, z = vertical up)
+        const isoX = (ry - rx * 0.65) * radius * 0.85;
+        const isoY = (-rz + (rx * 0.35 + ry * 0.25)) * radius * 0.85;
+        const tipX = cx + isoX;
+        const tipY = cy + isoY;
+
+        const pedY = cy + radius + 9;
+        const ringColor = isEntangled ? '#34d399' : '#38bdf8';
+        const arrowColor = isEntangled ? '#10b981' : '#f43f5e';
+
+        return `
+            <g class="iso-bloch-pedestal-group ${isInteractiveInit ? 'iso-clickable-pedestal' : ''}"
+               ${isInteractiveInit ? `data-init-qubit="${qubitIndex}"` : ''}
+               style="${isInteractiveInit ? 'cursor: pointer;' : ''}">
+                <title>${isInteractiveInit ? `Click to cycle Q${qubitIndex} initial state (${labelBottom})` : `Q${qubitIndex} Live State: ${labelBottom}`}</title>
+
+                <!-- Glowing Concentric Isometric Pedestal Base on the Grid Floor -->
+                <ellipse cx="${cx}" cy="${pedY + 4}" rx="${radius * 1.18}" ry="${radius * 0.42}"
+                         fill="rgba(15, 23, 42, 0.72)" stroke="${ringColor}" stroke-width="1.6" stroke-opacity="0.85" />
+                <ellipse cx="${cx}" cy="${pedY + 2}" rx="${radius * 0.92}" ry="${radius * 0.31}"
+                         fill="rgba(56, 189, 248, 0.16)" stroke="#bae6fd" stroke-width="1.2" stroke-dasharray="4,2" />
+                <ellipse cx="${cx}" cy="${pedY}" rx="${radius * 0.58}" ry="${radius * 0.19}"
+                         fill="rgba(56, 189, 248, 0.32)" />
+
+                <!-- Pedestal Upward Light Cone -->
+                <polygon points="${cx - radius * 0.85},${pedY} ${cx + radius * 0.85},${pedY} ${cx + radius * 0.98},${cy} ${cx - radius * 0.98},${cy}"
+                         fill="url(#iso-pedestal-beam)" opacity="0.45" />
+
+                <!-- Translucent 3D Glass Bloch Sphere -->
+                <circle cx="${cx}" cy="${cy}" r="${radius}"
+                        fill="${isEntangled ? 'url(#iso-sphere-entangled)' : 'url(#iso-sphere-glass)'}"
+                        stroke="${ringColor}" stroke-width="1.8" />
+
+                <!-- Equator & Meridian Wireframe Ellipses inside 3D Sphere -->
+                <ellipse cx="${cx}" cy="${cy}" rx="${radius}" ry="${radius * 0.34}"
+                         fill="none" stroke="rgba(186, 230, 253, 0.55)" stroke-width="1.1" stroke-dasharray="3,2" />
+                <ellipse cx="${cx}" cy="${cy}" rx="${radius * 0.36}" ry="${radius}"
+                         fill="none" stroke="rgba(186, 230, 253, 0.38)" stroke-width="1" />
+
+                <!-- Vertical Z Axis (|0⟩ North Pole to |1⟩ South Pole) -->
+                <line x1="${cx}" y1="${cy - radius}" x2="${cx}" y2="${cy + radius}"
+                      stroke="rgba(226, 232, 240, 0.45)" stroke-width="1" stroke-dasharray="2,2" />
+                <text x="${cx}" y="${cy - radius - 4}" text-anchor="middle" fill="#bae6fd" font-size="8.5" font-weight="800">|0⟩</text>
+                <text x="${cx + 9}" y="${cy + radius - 2}" text-anchor="start" fill="#94a3b8" font-size="7.5" font-weight="700">|1⟩</text>
+
+                <!-- Center Origin Dot -->
+                <circle cx="${cx}" cy="${cy}" r="2.5" fill="#e2e8f0" />
+
+                <!-- 3D State Vector Arrow or Entanglement Core -->
+                ${
+                    isEntangled && bloch.rLen < 0.15
+                        ? `
+                        <circle cx="${cx}" cy="${cy}" r="${radius * 0.36}" fill="rgba(16, 185, 129, 0.35)" stroke="#34d399" stroke-width="1.6" stroke-dasharray="3,2" />
+                        <text x="${cx}" y="${cy + 3}" text-anchor="middle" fill="#ecfdf5" font-size="7.5" font-weight="800">EPR</text>
+                    `
+                        : `
+                        <line x1="${cx}" y1="${cy}" x2="${tipX}" y2="${tipY}"
+                              stroke="${arrowColor}" stroke-width="3" stroke-linecap="round" filter="url(#iso-glow)" />
+                        <circle cx="${tipX}" cy="${tipY}" r="4.5" fill="${arrowColor}" stroke="#ffffff" stroke-width="1.4" />
+                    `
+                }
+
+                <!-- Specular Glass Highlight on Top-Left of Sphere -->
+                <ellipse cx="${cx - radius * 0.34}" cy="${cy - radius * 0.36}" rx="${radius * 0.28}" ry="${radius * 0.15}"
+                         transform="rotate(-28 ${cx - radius * 0.34} ${cy - radius * 0.36})"
+                         fill="rgba(255, 255, 255, 0.42)" />
+
+                <!-- Top & Bottom Labels -->
+                <text x="${cx}" y="${cy - radius - 15}" text-anchor="middle" fill="#f8fafc" font-size="10" font-weight="800" font-family="Inter, sans-serif">
+                    ${labelTop}
+                </text>
+                <rect x="${cx - 32}" y="${pedY + 11}" width="64" height="17" rx="8.5"
+                      fill="${isEntangled ? 'rgba(6, 95, 70, 0.92)' : 'rgba(15, 23, 42, 0.9)'}"
+                      stroke="${ringColor}" stroke-width="1.2" />
+                <text x="${cx}" y="${pedY + 23}" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="800" font-family="monospace">
+                    ${labelBottom}
+                </text>
+            </g>
+        `;
+    }
+
+    /**
+     * Renders the Microsoft Quantum Teleportation-Style Isometric 3D Bloch Pedestal & Circuit Stage!
+     * Replaces the old chip view with:
+     * - Isometric perspective grid platform (matching ms_teleportation.jpg & scene7_quantum_alg.png)
+     * - Left Input 3D Bloch Sphere Pedestals (click to cycle initial state |0⟩, |1⟩, |+⟩, |−⟩)
+     * - Standing 3D Isometric Gate Prisms (H, X, Y, Z, S, T, Rx, Ry, Rz, CNOT ●—⊕, CZ, SWAP, Measurement gauge with double classical wires)
+     * - Interactive wire landing pads (+) to add gates directly on the pretty diagram
+     * - Class-style vertical state slice markers (↑ |ψ₀⟩, ↑ |ψ₁⟩, ↑ |ψ₂⟩, ...) between every time step
+     * - Right Output 3D Bloch Sphere Pedestals showing live simulated state & entanglement ribbons
      */
     renderPhysicalQuantumChip(snap) {
         const stage = document.getElementById('qcl-physical-chip-stage');
         if (!stage) return;
 
         const n = this.numQubits;
-        const W = 740;
-        const H = 200;
-        const stepGates = snap && snap.stepGates ? snap.stepGates : [];
+        const numSteps = this.numSteps;
+        const W = 860;
+        const rowSpacing = n === 1 ? 0 : n === 2 ? 96 : n === 3 ? 74 : 60;
+        const H = Math.max(255, 130 + (n - 1) * rowSpacing + 65);
 
-        // Calculate horizontal X positions for each physical Xmon qubit on the silicon die
-        const dieX = 110;
-        const dieY = 24;
-        const dieW = 520;
-        const dieH = 152;
-        const spacing = dieW / (n + 1);
-        const qubitX = Array.from({ length: n }, (_, i) => dieX + spacing * (i + 1));
-        const qubitY = dieY + dieH * 0.54;
+        const leftPedX = 76;
+        const rightPedX = W - 78;
+        const wireStartX = leftPedX + 36;
+        const wireEndX = rightPedX - 36;
+        const stepWidth = (wireEndX - wireStartX) / numSteps;
 
-        // Check active gates in current step for pulse animations
-        const activeGateByQubit = {};
-        const activeCouplers = [];
-        stepGates.forEach(g => {
-            activeGateByQubit[g.qubit] = g;
-            if (GATE_LIBRARY[g.type]?.numQubits === 2 && g.targetQubit !== undefined) {
-                activeGateByQubit[g.targetQubit] = g;
-                activeCouplers.push({
-                    from: Math.min(g.qubit, g.targetQubit),
-                    to: Math.max(g.qubit, g.targetQubit),
-                    gate: g
-                });
+        const topMargin = n === 1 ? H * 0.45 : 64;
+        const wireY = Array.from({ length: n }, (_, q) => topMargin + q * rowSpacing);
+        const sphereR = n <= 2 ? 26 : n === 3 ? 22 : 19;
+
+        // 1. Build Isometric Perspective Grid Lines in Background (matching ms_teleportation.jpg & scene7_quantum_alg.png)
+        let isoGridSvg = '';
+        for (let gx = -240; gx <= W + 240; gx += 44) {
+            isoGridSvg += `
+                <line x1="${gx}" y1="0" x2="${gx + H * 1.15}" y2="${H}" stroke="rgba(56, 189, 248, 0.13)" stroke-width="1" />
+                <line x1="${gx}" y1="${H}" x2="${gx + H * 1.15}" y2="0" stroke="rgba(56, 189, 248, 0.11)" stroke-width="1" />
+            `;
+        }
+
+        // 2. Entanglement Glow Ribbons between entangled qubit wires on the isometric floor
+        let entanglementRibbonsSvg = '';
+        if (snap && snap.isSystemEntangled && n >= 2) {
+            const entIndices = snap.blochData.filter(b => b.isEntangled).map(b => b.qubit);
+            if (entIndices.length >= 2) {
+                const yMin = wireY[Math.min(...entIndices)];
+                const yMax = wireY[Math.max(...entIndices)];
+                entanglementRibbonsSvg = `
+                    <rect x="${wireStartX}" y="${yMin - 12}" width="${wireEndX - wireStartX}" height="${yMax - yMin + 24}"
+                          rx="16" fill="url(#iso-entangle-field)" stroke="rgba(52, 211, 153, 0.45)" stroke-width="1.5" stroke-dasharray="6,4" />
+                `;
             }
-        });
+        }
 
-        // Build SVG for each physical Xmon transmon qubit, its meandering λ/4 readout resonator,
-        // its green XY drive coax line, its blue Z flux bias line, and its gold SMA launch pads
-        let qubitsSvg = '';
-        let couplersSvg = '';
+        // 3. Active Time Slice Highlight Plane & Class State Slice Markers (↑ |ψ₀⟩, ↑ |ψ₁⟩, ↑ |ψ₂⟩...)
+        let sliceMarkersSvg = '';
+        for (let s = 0; s <= numSteps; s++) {
+            const sx = wireStartX + s * stepWidth;
+            const isCurrentSlice = this.activeStepIndex === s;
+            const subDigits = ['₀', '₁', '₂', '₃', '₄', '₅', '₆'];
+            const ketLabel = `|ψ${subDigits[s] || s}⟩`;
 
-        // 1. Tunable couplers between adjacent qubits (and long-range coupling arcs if non-adjacent)
-        for (let q = 0; q < n - 1; q++) {
-            const x1 = qubitX[q];
-            const x2 = qubitX[q + 1];
-            const midX = (x1 + x2) / 2;
-            const activeC = activeCouplers.find(c => c.from <= q && c.to >= q + 1);
-            const couplerColor = activeC ? '#34a853' : '#64748b';
-            const couplerGlow = activeC ? 'filter="url(#qpu-glow)" stroke-width="3.2"' : 'stroke-width="1.8"';
-
-            couplersSvg += `
-                <g class="qpu-coupler-group">
-                    <!-- Waveguide trace from Q${q} right arm to Coupler SQUID to Q${q + 1} left arm -->
-                    <line x1="${x1 + 24}" y1="${qubitY}" x2="${midX - 14}" y2="${qubitY}"
-                          stroke="${couplerColor}" ${couplerGlow} stroke-dasharray="${activeC ? 'none' : '3,2'}" />
-                    <line x1="${midX + 14}" y1="${qubitY}" x2="${x2 - 24}" y2="${qubitY}"
-                          stroke="${couplerColor}" ${couplerGlow} stroke-dasharray="${activeC ? 'none' : '3,2'}" />
-                    <!-- Tunable Coupler Transmon Pad -->
-                    <rect x="${midX - 13}" y="${qubitY - 9}" width="26" height="18" rx="4"
-                          fill="${activeC ? '#e6f4ea' : '#1e293b'}"
-                          stroke="${couplerColor}" stroke-width="1.8" />
-                    <text x="${midX}" y="${qubitY + 3}" text-anchor="middle"
-                          fill="${activeC ? '#137333' : '#94a3b8'}" font-size="8" font-weight="800">
-                        ${activeC ? activeC.gate.type : 'CPL'}
+            sliceMarkersSvg += `
+                <g class="iso-slice-marker-group" data-slice-step="${s}" style="cursor: pointer;">
+                    <title>Click to inspect state slice ${ketLabel} (Step t = ${s}) and its step-by-step algebra</title>
+                    <!-- Vertical dashed slice line across all wires (like scene7_quantum_alg.png) -->
+                    <line x1="${sx}" y1="${wireY[0] - 28}" x2="${sx}" y2="${H - 36}"
+                          stroke="${isCurrentSlice ? '#38bdf8' : 'rgba(148, 163, 184, 0.35)'}"
+                          stroke-width="${isCurrentSlice ? '2.4' : '1.2'}"
+                          stroke-dasharray="${isCurrentSlice ? 'none' : '4,4'}" />
+                    ${
+                        isCurrentSlice
+                            ? `<rect x="${sx - 16}" y="${wireY[0] - 30}" width="32" height="${H - wireY[0] - 4}" rx="8"
+                                     fill="rgba(56, 189, 248, 0.12)" pointer-events="none" />`
+                            : ''
+                    }
+                    <!-- Upward Arrow ↑ and |ψ_k⟩ Pill at bottom (matching class diagram!) -->
+                    <text x="${sx}" y="${H - 24}" text-anchor="middle"
+                          fill="${isCurrentSlice ? '#38bdf8' : '#94a3b8'}" font-size="11" font-weight="900">↑</text>
+                    <rect x="${sx - 23}" y="${H - 22}" width="46" height="18" rx="6"
+                          fill="${isCurrentSlice ? '#0284c7' : 'rgba(15, 23, 42, 0.85)'}"
+                          stroke="${isCurrentSlice ? '#7dd3fc' : 'rgba(148, 163, 184, 0.5)'}" stroke-width="1.3" />
+                    <text x="${sx}" y="${H - 9.5}" text-anchor="middle"
+                          fill="${isCurrentSlice ? '#ffffff' : '#cbd5e1'}" font-size="10.5" font-weight="800" font-family="Georgia, serif" font-style="italic">
+                        ${ketLabel}
                     </text>
                 </g>
             `;
         }
 
-        // 2. Individual Xmon Transmon Qubits + Coax Lines + Meandering Readout Resonator
+        // 4. Qubit Quantum Wires & Left/Right 3D Bloch Sphere Pedestals
+        let wiresAndPedestalsSvg = '';
+        const initVec = QuantumCircuitSimulator.createInitialStatevector(n, this.initialStates);
+
         for (let q = 0; q < n; q++) {
-            const cx = qubitX[q];
-            const cy = qubitY;
-            const bloch = snap && snap.blochData && snap.blochData[q] ? snap.blochData[q] : { stateLabel: '|0⟩', isEntangled: false, prob1: 0 };
-            const activeOp = activeGateByQubit[q];
+            const wy = wireY[q];
+            const initBloch = QuantumCircuitSimulator.computeQubitBlochData(initVec, n, q);
+            const liveBloch =
+                snap && snap.blochData && snap.blochData[q]
+                    ? snap.blochData[q]
+                    : initBloch;
 
-            // Determine what kind of physical pulse is active on this qubit
-            const isXYPulse = activeOp && ['H', 'X', 'Y', 'Rx', 'Ry'].includes(activeOp.type);
-            const isZPulse = activeOp && ['Z', 'S', 'T', 'Rz'].includes(activeOp.type);
-            const isMeasPulse = activeOp && activeOp.type === 'M';
-            const is2QPulse = activeOp && ['CNOT', 'CZ', 'SWAP'].includes(activeOp.type);
+            // Glowing quantum wire connecting Left Input Bloch Pedestal to Right Output Bloch Pedestal
+            const passedX = wireStartX + this.activeStepIndex * stepWidth;
+            wiresAndPedestalsSvg += `
+                <!-- Base quantum wire -->
+                <line x1="${wireStartX - 10}" y1="${wy}" x2="${wireEndX + 10}" y2="${wy}"
+                      stroke="rgba(148, 163, 184, 0.55)" stroke-width="3" />
+                <!-- Illuminated active quantum wave segment up to current slice |ψ_t⟩ -->
+                <line x1="${wireStartX - 10}" y1="${wy}" x2="${passedX}" y2="${wy}"
+                      stroke="${liveBloch.isEntangled ? '#34d399' : '#38bdf8'}" stroke-width="3.6" filter="url(#iso-glow)" />
+            `;
 
-            // Color of the Xmon cross based on its live quantum state
-            let crossFill = '#3b82f6'; // default sapphire blue |0⟩
-            let crossStroke = '#93c5fd';
-            if (bloch.isEntangled) {
-                crossFill = '#10b981'; // Emerald entangled state
-                crossStroke = '#a7f3d0';
-            } else if (bloch.prob1 > 0.85) {
-                crossFill = '#ea4335'; // Excited |1⟩ state (Google Red)
-                crossStroke = '#fca5a5';
-            } else if (Math.abs(bloch.prob1 - 0.5) < 0.2) {
-                crossFill = '#fbbc04'; // Superposition state (Google Yellow/Amber)
-                crossStroke = '#fde68a';
+            // Left Input 3D Bloch Sphere Pedestal (Interactive: click to cycle initial state)
+            wiresAndPedestalsSvg += this.renderSVGBlochPedestal(
+                leftPedX,
+                wy - 4,
+                sphereR,
+                initBloch,
+                `q${q} In`,
+                this.initialStates[q] || '|0⟩',
+                true,
+                q
+            );
+
+            // Right Output 3D Bloch Sphere Pedestal (Live state at active slice |ψ_t⟩)
+            wiresAndPedestalsSvg += this.renderSVGBlochPedestal(
+                rightPedX,
+                wy - 4,
+                sphereR,
+                liveBloch,
+                `q${q} State`,
+                liveBloch.isEntangled ? 'Entangled' : liveBloch.stateLabel.slice(0, 6),
+                false,
+                q
+            );
+        }
+
+        // 5. Standing 3D Isometric Gate Tiles & Interactive Wire Slots
+        let gatesAndSlotsSvg = '';
+        for (let s = 0; s < numSteps; s++) {
+            const cx = wireStartX + (s + 0.5) * stepWidth;
+            const isStepExecuted = s < this.activeStepIndex;
+            const isCurrentStep = s + 1 === this.activeStepIndex;
+
+            // First draw multi-qubit vertical 3D bridges in column s
+            const col2QGates = this.gates.filter(
+                g => g.step === s && GATE_LIBRARY[g.type]?.numQubits === 2 && g.targetQubit !== undefined
+            );
+            col2QGates.forEach(g => {
+                const y1 = wireY[g.qubit];
+                const y2 = wireY[g.targetQubit];
+                const def = GATE_LIBRARY[g.type];
+                gatesAndSlotsSvg += `
+                    <g class="iso-2q-bridge">
+                        <!-- Shadow on isometric floor -->
+                        <line x1="${cx + 5}" y1="${y1 + 6}" x2="${cx + 5}" y2="${y2 + 6}"
+                              stroke="rgba(15, 23, 42, 0.55)" stroke-width="6" stroke-linecap="round" />
+                        <!-- Glowing vertical entangling column -->
+                        <line x1="${cx}" y1="${y1}" x2="${cx}" y2="${y2}"
+                              stroke="${def.color}" stroke-width="4.2" stroke-linecap="round"
+                              ${isCurrentStep ? 'filter="url(#iso-glow)"' : ''} />
+                    </g>
+                `;
+            });
+
+            // Classical feed-forward double lines for Measurement gates (like Microsoft Teleportation diagram!)
+            const colMeasGates = this.gates.filter(g => g.step === s && g.type === 'M');
+            colMeasGates.forEach(mg => {
+                const my = wireY[mg.qubit];
+                const bottomBusY = H - 38;
+                gatesAndSlotsSvg += `
+                    <g class="iso-classical-feed">
+                        <line x1="${cx - 2}" y1="${my + 16}" x2="${cx - 2}" y2="${bottomBusY}" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,2" />
+                        <line x1="${cx + 2}" y1="${my + 16}" x2="${cx + 2}" y2="${bottomBusY}" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,2" />
+                    </g>
+                `;
+            });
+
+            // Now draw each wire slot (q, s)
+            for (let q = 0; q < n; q++) {
+                const cy = wireY[q];
+                const directGate = this.gates.find(g => g.qubit === q && g.step === s);
+                const targetOfGate = this.gates.find(
+                    g => g.step === s && GATE_LIBRARY[g.type]?.numQubits === 2 && g.targetQubit === q
+                );
+
+                if (directGate) {
+                    const def = GATE_LIBRARY[directGate.type];
+                    const isSelected = this.selectedPlacedGateId === directGate.id;
+                    gatesAndSlotsSvg += this.renderSVGIsometricGateTile(
+                        cx,
+                        cy,
+                        directGate,
+                        def,
+                        isSelected,
+                        isCurrentStep,
+                        isStepExecuted,
+                        'primary'
+                    );
+                } else if (targetOfGate) {
+                    const def = GATE_LIBRARY[targetOfGate.type];
+                    const isSelected = this.selectedPlacedGateId === targetOfGate.id;
+                    gatesAndSlotsSvg += this.renderSVGIsometricGateTile(
+                        cx,
+                        cy,
+                        targetOfGate,
+                        def,
+                        isSelected,
+                        isCurrentStep,
+                        isStepExecuted,
+                        'target'
+                    );
+                } else {
+                    // Interactive empty landing pad on the isometric wire
+                    gatesAndSlotsSvg += `
+                        <g class="iso-empty-slot" data-qubit="${q}" data-step="${s}" style="cursor: pointer;">
+                            <title>Click to place ${this.selectedPaletteGate} gate on wire q${q} at Step ${s + 1}</title>
+                            <ellipse cx="${cx}" cy="${cy}" rx="12" ry="7"
+                                     fill="rgba(15, 23, 42, 0.65)" stroke="rgba(148, 163, 184, 0.55)" stroke-width="1.2" stroke-dasharray="2,2" />
+                            <text x="${cx}" y="${cy + 3.5}" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="800">+</text>
+                        </g>
+                    `;
+                }
             }
-
-            // Meandering λ/4 readout resonator path from top bus (y=44) down to top of Xmon (cy-25)
-            const resTopY = 44;
-            const meanderPath = `
-                M ${cx} ${resTopY}
-                L ${cx} ${resTopY + 6}
-                L ${cx - 12} ${resTopY + 6}
-                L ${cx - 12} ${resTopY + 12}
-                L ${cx + 12} ${resTopY + 12}
-                L ${cx + 12} ${resTopY + 18}
-                L ${cx - 12} ${resTopY + 18}
-                L ${cx - 12} ${resTopY + 24}
-                L ${cx} ${resTopY + 24}
-                L ${cx} ${cy - 26}
-            `;
-
-            qubitsSvg += `
-                <g class="qpu-transmon-unit" data-qubit="${q}" style="cursor: pointer;">
-                    <title>Physical Transmon Qubit Q${q} (${bloch.stateLabel}) — Click to apply ${this.selectedPaletteGate} gate</title>
-
-                    <!-- Top Gold Readout Coupling Node & Meandering λ/4 Readout Resonator -->
-                    <circle cx="${cx}" cy="${resTopY}" r="3.5" fill="${isMeasPulse ? '#fbbc04' : '#cbd5e1'}" />
-                    <path d="${meanderPath}" fill="none"
-                          stroke="${isMeasPulse ? '#fbbc04' : '#94a3b8'}"
-                          stroke-width="${isMeasPulse ? '2.6' : '1.5'}"
-                          ${isMeasPulse ? 'filter="url(#qpu-glow)"' : ''} />
-                    <!-- Capacitive Readout Claw above Xmon North Arm -->
-                    <path d="M ${cx - 9} ${cy - 22} L ${cx - 9} ${cy - 26} L ${cx + 9} ${cy - 26} L ${cx + 9} ${cy - 22}"
-                          fill="none" stroke="${isMeasPulse ? '#fbbc04' : '#cbd5e1'}" stroke-width="1.8" />
-
-                    <!-- Bottom Left Emerald-Green XY Microwave Coaxial Control Line -->
-                    <path d="M ${cx - 28} ${H - 8} L ${cx - 22} ${H - 24} L ${cx - 14} ${cy + 16}"
-                          fill="none"
-                          stroke="${isXYPulse ? '#34a853' : '#22c55e'}"
-                          stroke-width="${isXYPulse ? '3.2' : '1.8'}"
-                          stroke-opacity="${isXYPulse ? '1' : '0.65'}" />
-                    <!-- Gold SMA Bottom Launch Pad for XY Drive -->
-                    <rect x="${cx - 35}" y="${H - 12}" width="14" height="8" rx="2" fill="#f59e0b" stroke="#b45309" stroke-width="1" />
-
-                    <!-- Bottom Right Royal-Blue Fast-Z Flux Bias Coaxial Line (to SQUID Josephson Junctions) -->
-                    <path d="M ${cx + 28} ${H - 8} L ${cx + 22} ${H - 24} L ${cx + 4} ${cy + 23}"
-                          fill="none"
-                          stroke="${isZPulse ? '#60a5fa' : '#3b82f6'}"
-                          stroke-width="${isZPulse ? '3.2' : '1.8'}"
-                          stroke-opacity="${isZPulse ? '1' : '0.65'}" />
-                    <!-- Gold SMA Bottom Launch Pad for Z Flux -->
-                    <rect x="${cx + 21}" y="${H - 12}" width="14" height="8" rx="2" fill="#f59e0b" stroke="#b45309" stroke-width="1" />
-
-                    <!-- Active Pulse Wavepacket Ring when a gate fires on Q${q} -->
-                    ${
-                        isXYPulse || isZPulse || isMeasPulse || is2QPulse
-                            ? `<circle cx="${cx}" cy="${cy}" r="30" fill="none" stroke="${GATE_LIBRARY[activeOp.type]?.color || '#4285f4'}" stroke-width="2.2" stroke-dasharray="4,3" opacity="0.9" />`
-                            : ''
-                    }
-
-                    <!-- Cross-Shaped Xmon Superconducting Transmon Qubit (Matched to Reference Image 003) -->
-                    <!-- Etched Dark Sapphire Isolation Trench around Cross -->
-                    <path d="M ${cx - 7} ${cy - 22} H ${cx + 7} V ${cy - 7} H ${cx + 22} V ${cy + 7} H ${cx + 7} V ${cy + 22} H ${cx - 7} V ${cy + 7} H ${cx - 22} V ${cy - 7} H ${cx - 7} Z"
-                          fill="#0f172a" stroke="#1e3a8a" stroke-width="2" />
-
-                    <!-- Superconducting Aluminum Cross Capacitor Pads -->
-                    <path d="M ${cx - 4.5} ${cy - 19} H ${cx + 4.5} V ${cy - 4.5} H ${cx + 19} V ${cy + 4.5} H ${cx + 4.5} V ${cy + 19} H ${cx - 4.5} V ${cy + 4.5} H ${cx - 19} V ${cy - 4.5} H ${cx - 4.5} Z"
-                          fill="${crossFill}" stroke="${crossStroke}" stroke-width="1.4" />
-
-                    <!-- Twin Josephson Junctions (Al/AlOx/Al SQUID Loop) at bottom leg of Xmon -->
-                    <line x1="${cx - 5}" y1="${cy + 19}" x2="${cx - 2}" y2="${cy + 23}" stroke="#f8fafc" stroke-width="1.5" />
-                    <line x1="${cx + 5}" y1="${cy + 19}" x2="${cx + 2}" y2="${cy + 23}" stroke="#f8fafc" stroke-width="1.5" />
-
-                    <!-- Qubit ID & Live State Badge on Chip -->
-                    <circle cx="${cx}" cy="${cy}" r="9" fill="#0f172a" stroke="${crossStroke}" stroke-width="1.2" />
-                    <text x="${cx}" y="${cy + 3.5}" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="800" font-family="monospace">
-                        Q${q}
-                    </text>
-
-                    <!-- Floating State Pill Below Qubit -->
-                    <rect x="${cx - 24}" y="${cy + 27}" width="48" height="16" rx="8"
-                          fill="#ffffff" stroke="${crossFill}" stroke-width="1.5" />
-                    <text x="${cx}" y="${cy + 38}" text-anchor="middle" fill="#202124" font-size="9.5" font-weight="800" font-family="monospace">
-                        ${bloch.isEntangled ? 'Entangled' : bloch.stateLabel.slice(0, 6)}
-                    </text>
-                </g>
-            `;
         }
 
         stage.innerHTML = `
-            <svg class="qcl-qpu-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+            <svg class="qcl-qpu-svg qcl-iso-stage-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
                 <defs>
-                    <linearGradient id="carrier-metal" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#e2e8f0" />
-                        <stop offset="50%" stop-color="#cbd5e1" />
-                        <stop offset="100%" stop-color="#94a3b8" />
+                    <linearGradient id="iso-stage-bg" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#0b192c" />
+                        <stop offset="50%" stop-color="#0f2942" />
+                        <stop offset="100%" stop-color="#1e3a5f" />
                     </linearGradient>
-                    <linearGradient id="silicon-die" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#0f172a" />
-                        <stop offset="100%" stop-color="#1e293b" />
+                    <radialGradient id="iso-sphere-glass" cx="35%" cy="30%" r="70%">
+                        <stop offset="0%" stop-color="rgba(224, 242, 254, 0.55)" />
+                        <stop offset="55%" stop-color="rgba(56, 189, 248, 0.22)" />
+                        <stop offset="100%" stop-color="rgba(3, 105, 161, 0.42)" />
+                    </radialGradient>
+                    <radialGradient id="iso-sphere-entangled" cx="35%" cy="30%" r="70%">
+                        <stop offset="0%" stop-color="rgba(209, 250, 229, 0.6)" />
+                        <stop offset="55%" stop-color="rgba(16, 185, 129, 0.28)" />
+                        <stop offset="100%" stop-color="rgba(4, 120, 87, 0.48)" />
+                    </radialGradient>
+                    <linearGradient id="iso-pedestal-beam" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stop-color="rgba(56, 189, 248, 0.42)" />
+                        <stop offset="100%" stop-color="rgba(56, 189, 248, 0.0)" />
                     </linearGradient>
-                    <filter id="qpu-glow" x="-30%" y="-30%" width="160%" height="160%">
+                    <linearGradient id="iso-entangle-field" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="rgba(16, 185, 129, 0.06)" />
+                        <stop offset="50%" stop-color="rgba(16, 185, 129, 0.18)" />
+                        <stop offset="100%" stop-color="rgba(16, 185, 129, 0.06)" />
+                    </linearGradient>
+                    <filter id="iso-glow" x="-30%" y="-30%" width="160%" height="160%">
                         <feGaussianBlur stdDeviation="2.5" result="blur" />
                         <feMerge>
                             <feMergeNode in="blur" />
@@ -638,73 +837,545 @@ class QuantumCircuitLabUI {
                     </filter>
                 </defs>
 
-                <!-- Outer Brushed-Aluminum Chamfered Cryo-Package Carrier (Matching Sycamore_Quantum_Chip.jpg) -->
-                <polygon points="18,8 722,8 734,20 734,180 722,192 18,192 6,180 6,20"
-                         fill="url(#carrier-metal)" stroke="#64748b" stroke-width="1.5" />
+                <!-- Isometric Gridded Stage Floor (Microsoft Teleportation & Class Diagram Aesthetic) -->
+                <rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="url(#iso-stage-bg)" stroke="#334155" stroke-width="1.5" />
+                <g opacity="0.9">${isoGridSvg}</g>
 
-                <!-- 4 Corner Cryo-Carrier Mounting Screws -->
-                <circle cx="24" cy="24" r="5" fill="#94a3b8" stroke="#475569" stroke-width="1.2" />
-                <circle cx="716" cy="24" r="5" fill="#94a3b8" stroke="#475569" stroke-width="1.2" />
-                <circle cx="24" cy="176" r="5" fill="#94a3b8" stroke="#475569" stroke-width="1.2" />
-                <circle cx="716" cy="176" r="5" fill="#94a3b8" stroke="#475569" stroke-width="1.2" />
-
-                <!-- Left RF-DAC Coax Input Header Badge -->
-                <g transform="translate(18, 62)">
-                    <rect x="0" y="0" width="78" height="76" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2" />
-                    <text x="39" y="18" text-anchor="middle" fill="#1a73e8" font-size="8.5" font-weight="800">RF-DAC COAX</text>
-                    <text x="39" y="31" text-anchor="middle" fill="#202124" font-size="9.5" font-weight="800">4–6 GHz</text>
-                    <line x1="10" y1="42" x2="68" y2="42" stroke="#22c55e" stroke-width="2.5" />
-                    <text x="39" y="53" text-anchor="middle" fill="#15803d" font-size="8" font-weight="700">XY Drive</text>
-                    <line x1="10" y1="61" x2="68" y2="61" stroke="#3b82f6" stroke-width="2.5" />
-                    <text x="39" y="71" text-anchor="middle" fill="#1d4ed8" font-size="8" font-weight="700">Z Flux Bias</text>
-                </g>
-
-                <!-- Central Dark Silicon Flip-Chip QPU Die -->
-                <rect x="${dieX}" y="${dieY}" width="${dieW}" height="${dieH}" rx="10"
-                      fill="url(#silicon-die)" stroke="#475569" stroke-width="2" />
-
-                <!-- Multiplexed Readout Transmission Bus across top of Silicon Die -->
-                <line x1="${dieX + 16}" y1="44" x2="${dieX + dieW - 16}" y2="44"
-                      stroke="#fbbc04" stroke-width="2.2" stroke-dasharray="6,3" />
-                <text x="${dieX + 22}" y="37" fill="#fde68a" font-size="8.5" font-weight="700" font-family="monospace">
-                    7.2 GHz MULTIPLEXED READOUT BUS → TWPA
+                <!-- Top Stage Banner Label -->
+                <text x="18" y="21" fill="#7dd3fc" font-size="9.5" font-weight="800" letter-spacing="0.08em">
+                    3D ISOMETRIC QUANTUM STAGE • INPUT BLOCH PEDESTALS ⟶ STANDING UNITARY GATES ⟶ OUTPUT BLOCH PEDESTALS
                 </text>
 
-                <!-- Couplers & Cross-Shaped Xmon Transmon Qubits -->
-                ${couplersSvg}
-                ${qubitsSvg}
+                <!-- Entanglement Field Ribbon -->
+                ${entanglementRibbonsSvg}
 
-                <!-- Right Readout Amplifier & Classical Bit Output Module -->
-                <g transform="translate(644, 52)">
-                    <rect x="0" y="0" width="78" height="94" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2" />
-                    <text x="39" y="17" text-anchor="middle" fill="#d93025" font-size="8.5" font-weight="800">10 mK TWPA</text>
-                    <text x="39" y="29" text-anchor="middle" fill="#202124" font-size="9" font-weight="800">READOUT</text>
-                    <rect x="10" y="36" width="58" height="24" rx="5" fill="#f8f9fa" stroke="#dadce0" />
-                    <text x="39" y="52" text-anchor="middle" fill="#1a73e8" font-size="11" font-weight="800" font-family="monospace">
-                        |ψ⟩ → c
-                    </text>
-                    <text x="39" y="75" text-anchor="middle" fill="#5f6368" font-size="8" font-weight="700">Click any Qubit</text>
-                    <text x="39" y="86" text-anchor="middle" fill="#5f6368" font-size="8" font-weight="700">to apply ${this.selectedPaletteGate}</text>
-                </g>
+                <!-- Vertical State Slice Markers (↑ |ψ₀⟩, ↑ |ψ₁⟩, ...) -->
+                ${sliceMarkersSvg}
+
+                <!-- Qubit Wires & 3D Translucent Bloch Sphere Pedestals -->
+                ${wiresAndPedestalsSvg}
+
+                <!-- Standing Isometric 3D Gate Tiles & Interactive Wire Slots -->
+                ${gatesAndSlotsSvg}
             </svg>
         `;
 
-        // Clicking a physical Xmon qubit on the chip places the selected gate on the next open slot on that wire!
-        stage.querySelectorAll('.qpu-transmon-unit').forEach(unit => {
-            unit.addEventListener('click', () => {
-                const q = Number(unit.dataset.qubit);
-                // Find first empty step on wire q
-                let targetStep = 0;
-                for (let s = 0; s < this.numSteps; s++) {
-                    const occupied = this.gates.some(
-                        g => g.step === s && (g.qubit === q || g.targetQubit === q)
-                    );
-                    if (!occupied) {
-                        targetStep = s;
-                        break;
-                    }
+        // Bind interactive events on the Isometric 3D Stage:
+        // 1) Clicking a left input Bloch pedestal cycles that wire's initial state!
+        stage.querySelectorAll('.iso-clickable-pedestal').forEach(ped => {
+            ped.addEventListener('click', e => {
+                e.stopPropagation();
+                const q = Number(ped.dataset.initQubit);
+                this.cycleInitialState(q);
+            });
+        });
+
+        // 2) Clicking any ↑ |ψ_k⟩ slice marker jumps the timeline & math derivation to step k!
+        stage.querySelectorAll('.iso-slice-marker-group').forEach(marker => {
+            marker.addEventListener('click', e => {
+                e.stopPropagation();
+                this.stopAutoPlay();
+                this.activeStepIndex = Number(marker.dataset.sliceStep);
+                this.refreshAll();
+            });
+        });
+
+        // 3) Clicking an empty slot (+) on the isometric wire places the selected gate!
+        stage.querySelectorAll('.iso-empty-slot').forEach(slot => {
+            slot.addEventListener('click', e => {
+                e.stopPropagation();
+                const q = Number(slot.dataset.qubit);
+                const s = Number(slot.dataset.step);
+                this.placeGateAt(this.selectedPaletteGate, q, s);
+            });
+        });
+
+        // 4) Clicking a standing 3D gate tile selects it (or clicking its × button deletes it)
+        stage.querySelectorAll('.iso-placed-gate-group').forEach(gEl => {
+            gEl.addEventListener('click', e => {
+                e.stopPropagation();
+                const delBtn = e.target.closest('.iso-gate-del');
+                const gId = gEl.dataset.gateId;
+                if (delBtn) {
+                    this.deletePlacedGate(gId);
+                    return;
                 }
-                this.placeGateAt(this.selectedPaletteGate, q, targetStep);
+                this.selectedPlacedGateId = gId;
+                const gObj = this.gates.find(g => g.id === gId);
+                if (gObj) {
+                    if (GATE_LIBRARY[gObj.type]?.hasTheta) {
+                        this.activeTheta = gObj.theta;
+                    }
+                    this.activeStepIndex = gObj.step + 1;
+                }
+                this.updatePaletteSelectionUI();
+                this.refreshAll();
+            });
+        });
+    }
+
+    /**
+     * Draws a standing 3D Isometric Gate Prism / Control Sphere / CNOT Target / Measurement Gauge
+     * on the Isometric Stage
+     */
+    renderSVGIsometricGateTile(cx, cy, gate, def, isSelected, isCurrentStep, isStepExecuted, role) {
+        const color = def.color;
+        const glowAttr = isCurrentStep || isSelected ? 'filter="url(#iso-glow)"' : '';
+        const strokeColor = isSelected ? '#fde047' : '#ffffff';
+        const strokeW = isSelected ? '2.4' : '1.4';
+
+        // CNOT Control Dot (3D glowing sphere on control wire)
+        if (gate.type === 'CNOT' && role === 'primary') {
+            return `
+                <g class="iso-placed-gate-group" data-gate-id="${gate.id}" style="cursor: pointer;">
+                    <title>CNOT Control on q${gate.qubit} → Target on q${gate.targetQubit} (Click to select or remove)</title>
+                    <ellipse cx="${cx}" cy="${cy + 14}" rx="10" ry="4" fill="rgba(15, 23, 42, 0.55)" />
+                    <circle cx="${cx}" cy="${cy}" r="10" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeW}" ${glowAttr} />
+                    <circle cx="${cx - 3}" cy="${cy - 3}" r="3" fill="rgba(255,255,255,0.65)" />
+                    <g class="iso-gate-del" transform="translate(${cx + 11}, ${cy - 11})">
+                        <circle r="7" fill="#ef4444" stroke="#ffffff" stroke-width="1.2" />
+                        <text y="3.5" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="800">&times;</text>
+                    </g>
+                </g>
+            `;
+        }
+
+        // CNOT Target ⊕ (3D Isometric XOR ring)
+        if (gate.type === 'CNOT' && role === 'target') {
+            return `
+                <g class="iso-placed-gate-group" data-gate-id="${gate.id}" style="cursor: pointer;">
+                    <title>CNOT Target (⊕) on q${gate.targetQubit} controlled by q${gate.qubit}</title>
+                    <ellipse cx="${cx}" cy="${cy + 18}" rx="15" ry="5" fill="rgba(15, 23, 42, 0.55)" />
+                    <circle cx="${cx + 3}" cy="${cy + 2}" r="15" fill="#064e3b" stroke="${color}" stroke-width="1.5" />
+                    <circle cx="${cx}" cy="${cy}" r="15" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeW}" ${glowAttr} />
+                    <line x1="${cx - 9}" y1="${cy}" x2="${cx + 9}" y2="${cy}" stroke="#ffffff" stroke-width="2.6" />
+                    <line x1="${cx}" y1="${cy - 9}" x2="${cx}" y2="${cy + 9}" stroke="#ffffff" stroke-width="2.6" />
+                </g>
+            `;
+        }
+
+        // Standing 3D Isometric Prism Tile for H, X, Y, Z, S, T, Rx, Ry, Rz, CZ, SWAP, M
+        const w = 36;
+        const h = 36;
+        const dx = 6; // 3D isometric depth extrude X
+        const dy = -5; // 3D isometric depth extrude Y
+        const x0 = cx - w / 2;
+        const y0 = cy - h / 2;
+
+        const subText = def.hasTheta
+            ? formatRadiansShort(gate.theta)
+            : gate.type === 'M'
+            ? 'READ'
+            : '';
+
+        return `
+            <g class="iso-placed-gate-group" data-gate-id="${gate.id}" style="cursor: pointer;">
+                <title>${def.name} at Step ${gate.step + 1} (Click to inspect or remove)</title>
+                <!-- Isometric floor drop shadow -->
+                <ellipse cx="${cx + 3}" cy="${cy + h / 2 + 7}" rx="18" ry="5.5" fill="rgba(2, 6, 23, 0.6)" />
+
+                <!-- 3D Top Extruded Face -->
+                <polygon points="${x0},${y0} ${x0 + dx},${y0 + dy} ${x0 + w + dx},${y0 + dy} ${x0 + w},${y0}"
+                         fill="${color}" filter="brightness(1.25)" stroke="rgba(255,255,255,0.6)" stroke-width="0.9" />
+
+                <!-- 3D Right Extruded Side Face -->
+                <polygon points="${x0 + w},${y0} ${x0 + w + dx},${y0 + dy} ${x0 + w + dx},${y0 + h + dy} ${x0 + w},${y0 + h}"
+                         fill="${color}" filter="brightness(0.75)" stroke="rgba(255,255,255,0.4)" stroke-width="0.9" />
+
+                <!-- Front Standing Isometric Gate Face -->
+                <rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="5"
+                      fill="${color}" stroke="${strokeColor}" stroke-width="${strokeW}" ${glowAttr} />
+
+                ${
+                    gate.type === 'M'
+                        ? `
+                        <!-- Measurement Meter Dial Gauge Arc & Needle (like ms_teleportation.jpg) -->
+                        <path d="M ${cx - 11} ${cy + 4} A 11 11 0 0 1 ${cx + 11} ${cy + 4}" fill="none" stroke="#ffffff" stroke-width="2" />
+                        <line x1="${cx}" y1="${cy + 4}" x2="${cx + 7}" y2="${cy - 6}" stroke="#fde047" stroke-width="2.2" stroke-linecap="round" />
+                        <text x="${cx}" y="${cy + 14}" text-anchor="middle" fill="#fde047" font-size="7.5" font-weight="800">METER</text>
+                    `
+                        : `
+                        <text x="${cx}" y="${cy + (subText ? 1 : 5)}" text-anchor="middle"
+                              fill="#ffffff" font-size="14.5" font-weight="900" font-family="Inter, sans-serif">
+                            ${role === 'target' && gate.type === 'SWAP' ? '✕' : def.symbol}
+                        </text>
+                        ${
+                            subText
+                                ? `<text x="${cx}" y="${cy + 13}" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-size="8" font-weight="700" font-family="monospace">${subText}</text>`
+                                : ''
+                        }
+                    `
+                }
+
+                ${
+                    role === 'primary'
+                        ? `
+                        <g class="iso-gate-del" transform="translate(${x0 + w + 3}, ${y0 - 3})">
+                            <circle r="7" fill="#ef4444" stroke="#ffffff" stroke-width="1.2" />
+                            <text y="3.5" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="800">&times;</text>
+                        </g>
+                    `
+                        : ''
+                }
+            </g>
+        `;
+    }
+
+    /**
+     * Renders Mode 2: The Dedicated Class Oracle & Algorithm Diagram Section (scene7_quantum_alg.png & HW3 Part Two)
+     */
+    renderClassOracleStage() {
+        const container = document.getElementById('qcl-oracle-stage-container');
+        if (!container || typeof ORACLE_ALGORITHM_PRESETS === 'undefined') return;
+
+        const preset = ORACLE_ALGORITHM_PRESETS[this.activeOraclePresetId] || ORACLE_ALGORITHM_PRESETS.bv_s01;
+        const activeSlice = preset.slices[this.activeOracleSliceIdx] || preset.slices[0];
+
+        container.innerHTML = `
+            <div class="qcl-oracle-header">
+                <div>
+                    <span class="qcl-eyebrow-tag">CLASS ALGORITHM &amp; ORACLE ARCHITECTURE (CSE 4412 HW3 PART TWO &amp; MOSCA CH. 6)</span>
+                    <h3 class="qcl-card-title">${preset.title}</h3>
+                </div>
+                <div class="qcl-oracle-preset-pills">
+                    ${Object.values(ORACLE_ALGORITHM_PRESETS)
+                        .map(
+                            p => `
+                        <button class="qcl-btn qcl-btn-chip ${p.id === preset.id ? 'active-preset-chip' : ''}"
+                                data-oracle-preset="${p.id}">
+                            ${p.badge}: s=${p.secretString}
+                        </button>
+                    `
+                        )
+                        .join('')}
+                </div>
+            </div>
+
+            <!-- Interactive Class-Style Oracle Diagram SVG (Matching scene7_quantum_alg.png) -->
+            <div class="qcl-oracle-svg-wrap">
+                <svg class="qcl-oracle-svg" viewBox="0 0 820 250" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <linearGradient id="oracle-bg-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#15325b" />
+                            <stop offset="55%" stop-color="#165b8c" />
+                            <stop offset="100%" stop-color="#1985a1" />
+                        </linearGradient>
+                    </defs>
+                    <rect x="0" y="0" width="820" height="250" rx="14" fill="url(#oracle-bg-grad)" stroke="#38bdf8" stroke-width="1.5" />
+
+                    <!-- Isometric perspective grid background matching scene7_quantum_alg.png -->
+                    <g opacity="0.22">
+                        ${Array.from({ length: 24 }, (_, i) => {
+                            const gx = -180 + i * 50;
+                            return `
+                                <line x1="${gx}" y1="0" x2="${gx + 260}" y2="250" stroke="#bae6fd" stroke-width="1" />
+                                <line x1="${gx}" y1="250" x2="${gx + 260}" y2="0" stroke="#bae6fd" stroke-width="1" />
+                            `;
+                        }).join('')}
+                    </g>
+
+                    <!-- Top Register Wire: |0⟩ —/n— H^⊗n — x — [ U_f ] — x — H^⊗n — Measure |s⟩ -->
+                    <text x="58" y="80" text-anchor="end" fill="#e0f2fe" font-size="24" font-family="Georgia, serif">|0⟩</text>
+                    <line x1="70" y1="73" x2="175" y2="73" stroke="#bae6fd" stroke-width="2.6" />
+                    <!-- Multi-qubit bundle slash /n -->
+                    <line x1="112" y1="88" x2="134" y2="58" stroke="#bae6fd" stroke-width="2.2" />
+                    <text x="122" y="53" text-anchor="middle" fill="#7dd3fc" font-size="18" font-weight="800" font-family="Georgia, serif">n=${preset.n}</text>
+
+                    <!-- First H^⊗n Box -->
+                    <rect x="175" y="45" width="68" height="56" fill="rgba(15, 23, 42, 0.45)" stroke="#bae6fd" stroke-width="2.2" />
+                    <text x="209" y="80" text-anchor="middle" fill="#e0f2fe" font-size="21" font-family="Georgia, serif" font-style="italic">
+                        H<tspan baseline-shift="super" font-size="13">⊗${preset.n}</tspan>
+                    </text>
+
+                    <line x1="243" y1="73" x2="315" y2="73" stroke="#bae6fd" stroke-width="2.6" />
+
+                    <!-- Bottom Ancilla Wire: |1⟩ ——— H — y — [ U_f : y ⊕ f(x) ] ——— |−⟩ -->
+                    <text x="58" y="166" text-anchor="end" fill="#e0f2fe" font-size="24" font-family="Georgia, serif">|1⟩</text>
+                    <line x1="70" y1="158" x2="175" y2="158" stroke="#bae6fd" stroke-width="2.6" />
+
+                    <!-- Bottom H Box -->
+                    <rect x="175" y="130" width="68" height="56" fill="rgba(15, 23, 42, 0.45)" stroke="#bae6fd" stroke-width="2.2" />
+                    <text x="209" y="166" text-anchor="middle" fill="#e0f2fe" font-size="23" font-family="Georgia, serif" font-style="italic">H</text>
+
+                    <line x1="243" y1="158" x2="315" y2="158" stroke="#bae6fd" stroke-width="2.6" />
+
+                    <!-- Large Central Quantum Oracle Box U_f (matching scene7_quantum_alg.png!) -->
+                    <rect x="315" y="34" width="205" height="160" fill="rgba(15, 23, 42, 0.48)" stroke="#7dd3fc" stroke-width="2.5" />
+                    <text x="334" y="78" fill="#bae6fd" font-size="20" font-family="Georgia, serif" font-style="italic">x</text>
+                    <text x="498" y="78" text-anchor="end" fill="#bae6fd" font-size="20" font-family="Georgia, serif" font-style="italic">x</text>
+                    <text x="417" y="122" text-anchor="middle" fill="#ffffff" font-size="30" font-family="Georgia, serif" font-style="italic">
+                        U<tspan baseline-shift="sub" font-size="20">f</tspan>
+                    </text>
+                    <text x="334" y="164" fill="#bae6fd" font-size="20" font-family="Georgia, serif" font-style="italic">y</text>
+                    <text x="504" y="164" text-anchor="end" fill="#fde047" font-size="20" font-family="Georgia, serif" font-style="italic">y ⊕ f(x)</text>
+
+                    <!-- Wires Exiting U_f -->
+                    <line x1="520" y1="73" x2="590" y2="73" stroke="#bae6fd" stroke-width="2.6" />
+                    <line x1="520" y1="158" x2="755" y2="158" stroke="#bae6fd" stroke-width="2.6" />
+                    <text x="765" y="163" fill="#bae6fd" font-size="16" font-family="monospace">|−⟩</text>
+
+                    <!-- Final H^⊗n Box on Top Register -->
+                    <rect x="590" y="45" width="68" height="56" fill="rgba(15, 23, 42, 0.45)" stroke="#bae6fd" stroke-width="2.2" />
+                    <text x="624" y="80" text-anchor="middle" fill="#e0f2fe" font-size="21" font-family="Georgia, serif" font-style="italic">
+                        H<tspan baseline-shift="super" font-size="13">⊗${preset.n}</tspan>
+                    </text>
+                    <line x1="658" y1="73" x2="715" y2="73" stroke="#bae6fd" stroke-width="2.6" />
+
+                    <!-- Final Measurement Output Badge -->
+                    <rect x="715" y="51" width="88" height="44" rx="8" fill="#0284c7" stroke="#fde047" stroke-width="2" />
+                    <text x="759" y="70" text-anchor="middle" fill="#fde047" font-size="10" font-weight="800">OUTPUT</text>
+                    <text x="759" y="86" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="900" font-family="monospace">|${preset.secretString.slice(0, 3)}⟩</text>
+
+                    <!-- Interactive Vertical State Slice Arrows ↑ |ψ₀⟩, ↑ |ψ₁⟩, ↑ |ψ₂⟩, ↑ |ψ₃⟩ -->
+                    ${[
+                        { idx: 0, x: 145, label: '|ψ₀⟩' },
+                        { idx: 1, x: 278, label: '|ψ₁⟩' },
+                        { idx: 2, x: 554, label: '|ψ₂⟩' },
+                        { idx: 3, x: 688, label: '|ψ₃⟩' }
+                    ]
+                        .map(sl => {
+                            const isSel = this.activeOracleSliceIdx === sl.idx;
+                            return `
+                            <g class="oracle-slice-btn" data-oracle-slice="${sl.idx}" style="cursor: pointer;">
+                                <line x1="${sl.x}" y1="28" x2="${sl.x}" y2="195"
+                                      stroke="${isSel ? '#fde047' : 'rgba(186, 230, 253, 0.4)'}"
+                                      stroke-width="${isSel ? '2.5' : '1.4'}" stroke-dasharray="5,4" />
+                                <text x="${sl.x}" y="212" text-anchor="middle" fill="${isSel ? '#fde047' : '#bae6fd'}" font-size="16" font-weight="900">↑</text>
+                                <rect x="${sl.x - 30}" y="216" width="60" height="26" rx="8"
+                                      fill="${isSel ? '#fde047' : 'rgba(15, 23, 42, 0.78)'}"
+                                      stroke="${isSel ? '#ffffff' : '#7dd3fc'}" stroke-width="1.5" />
+                                <text x="${sl.x}" y="234" text-anchor="middle"
+                                      fill="${isSel ? '#0f172a' : '#e0f2fe'}" font-size="16" font-weight="800" font-family="Georgia, serif">
+                                    ${sl.label}
+                                </text>
+                            </g>
+                        `;
+                        })
+                        .join('')}
+                </svg>
+            </div>
+
+            <!-- Interactive Slice Selector Pills & Step-by-Step Hand Calculation Display -->
+            <div class="qcl-oracle-body-grid">
+                <div class="qcl-oracle-derivation-panel">
+                    <div class="qcl-oracle-slice-tabs">
+                        ${preset.slices
+                            .map(
+                                (sl, idx) => `
+                            <button class="qcl-oracle-slice-tab ${idx === this.activeOracleSliceIdx ? 'active' : ''}"
+                                    data-oracle-slice="${idx}">
+                                Slice ${sl.label}: ${sl.stageTitle.split('(')[0]}
+                            </button>
+                        `
+                            )
+                            .join('')}
+                    </div>
+
+                    <!-- Highlighted Active Slice Formula & Step-by-Step Hand Calculation -->
+                    <div class="qcl-oracle-active-slice-box">
+                        <div class="qcl-oracle-slice-title">${activeSlice.label} — ${activeSlice.stageTitle}</div>
+                        <div class="qcl-oracle-main-eq">${activeSlice.formulaHTML}</div>
+                        <div class="qcl-oracle-steps-list">
+                            ${activeSlice.stepsHTML.map(st => `<div class="qcl-oracle-step-item">${st}</div>`).join('')}
+                        </div>
+                    </div>
+
+                    <!-- All 4 Slices Overview Accordion / List for Exam Reference -->
+                    <div class="qcl-oracle-all-slices-summary">
+                        <div class="qcl-math-card-title">Complete Exam / HW3 Hand-Calculation Summary (${preset.formulaDesc})</div>
+                        ${preset.slices
+                            .map(
+                                (sl, idx) => `
+                            <div class="qcl-oracle-summary-row ${idx === this.activeOracleSliceIdx ? 'active-row' : ''}" data-oracle-slice="${idx}">
+                                <span class="qcl-osr-tag">${sl.label}</span>
+                                <div class="qcl-osr-eq">${sl.formulaHTML}</div>
+                            </div>
+                        `
+                            )
+                            .join('')}
+                    </div>
+                </div>
+
+                <!-- Right Side of Oracle Card: Oracle Truth Table f(x) & 1-Click Load into 3D Stage -->
+                <div class="qcl-oracle-truth-panel">
+                    <div class="qcl-math-card-title">Oracle Function Table: ${preset.formulaDesc}</div>
+                    <table class="qcl-formal-amp-table">
+                        <thead>
+                            <tr>
+                                <th>Input x</th>
+                                <th>Calculation</th>
+                                <th>f(x)</th>
+                                <th>Kickback (−1)<sup>f(x)</sup></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${preset.truthTable
+                                .map(
+                                    row => `
+                                <tr class="${row.fx === 1 ? 'active-basis-row' : ''}">
+                                    <td><code>|${row.x}⟩</code></td>
+                                    <td><code>${row.calc}</code></td>
+                                    <td><strong>${row.fx}</strong></td>
+                                    <td><strong style="color:${row.fx === 1 ? '#dc2626' : '#16a34a'}">${row.fx === 1 ? '−1' : '+1'}</strong></td>
+                                </tr>
+                            `
+                                )
+                                .join('')}
+                        </tbody>
+                    </table>
+
+                    <button class="qcl-btn qcl-btn-blue" id="qcl-load-oracle-to-3d" style="width: 100%; margin-top: 10px; padding: 9px;">
+                        ✨ Load Equivalent CNOT Circuit onto 3D Isometric Bloch Stage →
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.querySelectorAll('[data-oracle-preset]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.activeOraclePresetId = btn.dataset.oraclePreset;
+                this.activeOracleSliceIdx = 2;
+                this.renderClassOracleStage();
+            });
+        });
+
+        container.querySelectorAll('[data-oracle-slice]').forEach(el => {
+            el.addEventListener('click', () => {
+                this.activeOracleSliceIdx = Number(el.dataset.oracleSlice);
+                this.renderClassOracleStage();
+            });
+        });
+
+        document.getElementById('qcl-load-oracle-to-3d')?.addEventListener('click', () => {
+            const eq = preset.equivalentCircuit;
+            if (eq) {
+                this.pushUndoState();
+                this.numQubits = eq.numQubits;
+                this.initialStates = [...eq.initialStates];
+                this.gates = eq.gates.map(g => ({ ...g }));
+                this.activeStepIndex = 3;
+                this.switchStageMode('isometric');
+            }
+        });
+    }
+
+    /**
+     * Renders Mode 3: The Course Chapters, HW2 / HW3 & Exam 1 Step-by-Step Math Workbook
+     */
+    renderCourseChaptersWorkbook() {
+        const container = document.getElementById('qcl-chapters-workbook-container');
+        if (!container || typeof COURSE_CHAPTERS === 'undefined') return;
+
+        const chapter = COURSE_CHAPTERS[this.activeChapterIndex] || COURSE_CHAPTERS[0];
+
+        container.innerHTML = `
+            <div class="qcl-workbook-header">
+                <div>
+                    <span class="qcl-eyebrow-tag">${chapter.sourceTag}</span>
+                    <h3 class="qcl-card-title">${chapter.number}: ${chapter.title}</h3>
+                </div>
+                <div class="qcl-chapter-Selector-pills">
+                    ${COURSE_CHAPTERS.map(
+                        (ch, idx) => `
+                        <button class="qcl-btn qcl-btn-chip ${idx === this.activeChapterIndex ? 'active-preset-chip' : ''}"
+                                data-chapter-idx="${idx}">
+                            ${ch.number}
+                        </button>
+                    `
+                    ).join('')}
+                </div>
+            </div>
+
+            <p class="qcl-workbook-summary">${chapter.summary}</p>
+
+            <!-- Key Chapter Formulas Box -->
+            <div class="qcl-workbook-formulas-grid">
+                ${chapter.keyFormulas
+                    .map(
+                        f => `
+                    <div class="qcl-wb-formula-card">
+                        <div class="qcl-wb-formula-name">${f.name}</div>
+                        <div class="qcl-wb-formula-eq">${f.eq}</div>
+                    </div>
+                `
+                    )
+                    .join('')}
+            </div>
+
+            <!-- Step-by-Step Calculated Examples from Class, HW2, HW3 & Exam 1 Study Guide -->
+            <div class="qcl-workbook-examples-list">
+                ${chapter.examples
+                    .map(
+                        ex => `
+                    <div class="qcl-wb-example-card">
+                        <div class="qcl-wb-ex-header">
+                            <div>
+                                <span class="qcl-google-pill pill-blue">${ex.badge}</span>
+                                <h4 class="qcl-wb-ex-title">${ex.title}</h4>
+                            </div>
+                            ${
+                                ex.loadCircuit
+                                    ? `<button class="qcl-btn qcl-btn-blue qcl-btn-xs qcl-wb-load-btn" data-ex-id="${ex.id}">
+                                           ✨ Load on 3D Isometric Stage →
+                                       </button>`
+                                    : ex.openOraclePreset
+                                    ? `<button class="qcl-btn qcl-btn-blue qcl-btn-xs qcl-wb-oracle-btn" data-oracle-id="${ex.openOraclePreset}">
+                                           🎓 Open in Class Oracle Diagram →
+                                       </button>`
+                                    : ''
+                            }
+                        </div>
+                        <div class="qcl-wb-problem-box">
+                            <strong>Problem:</strong> ${ex.problemStatement}
+                        </div>
+                        <div class="qcl-wb-steps">
+                            ${ex.steps
+                                .map(
+                                    (st, sIdx) => `
+                                <div class="qcl-wb-step-row">
+                                    <div class="qcl-wb-step-badge">Step ${sIdx + 1}: ${st.label}</div>
+                                    <div class="qcl-wb-step-math">${st.math}</div>
+                                    <div class="qcl-wb-step-note">${st.note}</div>
+                                </div>
+                            `
+                                )
+                                .join('')}
+                        </div>
+                    </div>
+                `
+                    )
+                    .join('')}
+            </div>
+        `;
+
+        container.querySelectorAll('[data-chapter-idx]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.activeChapterIndex = Number(btn.dataset.chapterIdx);
+                this.renderCourseChaptersWorkbook();
+            });
+        });
+
+        container.querySelectorAll('.qcl-wb-load-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const exId = btn.dataset.exId;
+                const ex = chapter.examples.find(e => e.id === exId);
+                if (ex && ex.loadCircuit) {
+                    this.pushUndoState();
+                    this.numQubits = ex.loadCircuit.numQubits;
+                    this.initialStates = [...ex.loadCircuit.initialStates];
+                    this.gates = ex.loadCircuit.gates.map(g => ({ ...g }));
+                    const maxStep = this.gates.reduce((m, g) => Math.max(m, g.step), 0);
+                    this.activeStepIndex = maxStep + 1;
+                    this.switchStageMode('isometric');
+                }
+            });
+        });
+
+        container.querySelectorAll('.qcl-wb-oracle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.activeOraclePresetId = btn.dataset.oracleId;
+                this.activeOracleSliceIdx = 2;
+                this.switchStageMode('oracle');
             });
         });
     }
@@ -1558,9 +2229,11 @@ class QuantumCircuitLabUI {
         const ketEl = document.getElementById('qcl-dirac-ket');
         const orderLabel = document.getElementById('qcl-ket-order-label');
         const ampGrid = document.getElementById('qcl-amplitudes-grid');
+        const derivList = document.getElementById('qcl-step-derivation-list');
+        const proofBox = document.getElementById('qcl-entanglement-proof-box');
 
         if (eyebrow) {
-            eyebrow.textContent = snap.stepIndex === 0 ? 'INITIAL STATE (t = 0)' : `AFTER PULSE STEP t = ${snap.stepIndex}`;
+            eyebrow.textContent = snap.stepIndex === 0 ? 'SLICE |ψ₀⟩ (INITIAL STATE t = 0)' : `SLICE |ψ${snap.stepIndex}⟩ (AFTER STEP t = ${snap.stepIndex})`;
         }
         if (opTitle) opTitle.textContent = snap.description;
         if (badge) {
@@ -1578,10 +2251,71 @@ class QuantumCircuitLabUI {
             rerollBtn.style.display = hasAnyMeasurement ? 'inline-flex' : 'none';
         }
         if (subEl) subEl.textContent = snap.stepIndex;
-        if (ketEl) ketEl.textContent = snap.diracString;
+        if (ketEl) {
+            if (typeof QuantumMathDerivationEngine !== 'undefined') {
+                ketEl.innerHTML = QuantumMathDerivationEngine.formatStatePrettyHTML(snap.basisStates);
+            } else {
+                ketEl.textContent = snap.diracString;
+            }
+        }
         if (orderLabel) {
-            const wires = Array.from({ length: this.numQubits }, (_, i) => `Q${i}`).join(' ');
+            const wires = Array.from({ length: this.numQubits }, (_, i) => `q${i}`).join(' ');
             orderLabel.textContent = `|${wires}⟩`;
+        }
+
+        // 1. Render Step-by-Step Algebraic Derivation Cards (|ψ₀⟩ → |ψ₁⟩ → |ψ₂⟩ ...)
+        if (derivList && typeof QuantumMathDerivationEngine !== 'undefined' && this.lastSimResult) {
+            const steps = QuantumMathDerivationEngine.generateCircuitDerivation(
+                {
+                    numQubits: this.numQubits,
+                    initialStates: this.initialStates,
+                    gates: this.gates
+                },
+                this.lastSimResult,
+                this.activeStepIndex
+            );
+
+            derivList.innerHTML = steps
+                .map(
+                    st => `
+                <div class="qcl-deriv-step-card ${st.isActive ? 'active-deriv-step' : ''}" data-deriv-step="${st.stepIndex}">
+                    <div class="qcl-deriv-card-header">
+                        <span class="qcl-deriv-slice-pill">${st.sliceLabel}</span>
+                        <span class="qcl-deriv-card-title">${st.title}</span>
+                    </div>
+                    <div class="qcl-deriv-rule">${st.ruleExplanation}</div>
+                    <div class="qcl-deriv-algebra-box">
+                        ${st.algebraLines.map(line => `<div class="qcl-deriv-eq-line">${line}</div>`).join('')}
+                    </div>
+                    <div class="qcl-deriv-born-row">${st.bornSummary}</div>
+                </div>
+            `
+                )
+                .join('');
+
+            derivList.querySelectorAll('.qcl-deriv-step-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    this.stopAutoPlay();
+                    this.activeStepIndex = Number(card.dataset.derivStep);
+                    this.refreshAll();
+                });
+            });
+        }
+
+        // 2. Render Automatic CSE 4412 Exam 1 Separability / Entanglement Proof
+        if (proofBox && typeof QuantumMathDerivationEngine !== 'undefined') {
+            const proof = QuantumMathDerivationEngine.generateEntanglementProofHTML(snap, this.numQubits);
+            proofBox.innerHTML = `
+                <div class="qcl-proof-card ${proof.isEntangled ? 'proof-entangled' : 'proof-separable'}">
+                    <div class="qcl-proof-header">
+                        <span class="qcl-proof-icon">${proof.isEntangled ? '🔗' : '🧩'}</span>
+                        <strong>${proof.title}</strong>
+                    </div>
+                    <div class="qcl-proof-steps">
+                        ${proof.stepsHTML.map(p => `<div class="qcl-proof-step-line">${p}</div>`).join('')}
+                    </div>
+                </div>
+            `;
         }
 
         if (ampGrid) {
@@ -2045,7 +2779,12 @@ class QuantumCircuitLabUI {
             }
         });
 
-        // Right Column Tab Switcher (Bloch | Shots | Math)
+        // Stage Mode Switcher Tabs (3D Isometric Bloch Stage | Class Oracle Diagram | Course Chapters & HW Math)
+        document.querySelectorAll('.qcl-stage-mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.switchStageMode(btn.dataset.stageMode));
+        });
+
+        // Right Column Tab Switcher (Math | Bloch | Shots)
         document.querySelectorAll('.qcl-insp-tab').forEach(btn => {
             btn.addEventListener('click', () => this.switchRightTab(btn.dataset.tab));
         });
@@ -2053,13 +2792,16 @@ class QuantumCircuitLabUI {
         // Lesson navigation
         document.getElementById('qcl-prev-lesson')?.addEventListener('click', () => {
             const nextIdx = (this.currentLessonIndex - 1 + CIRCUIT_LESSONS.length) % CIRCUIT_LESSONS.length;
+            this.switchStageMode('isometric');
             this.loadLesson(nextIdx, true);
         });
         document.getElementById('qcl-next-lesson')?.addEventListener('click', () => {
             const nextIdx = (this.currentLessonIndex + 1) % CIRCUIT_LESSONS.length;
+            this.switchStageMode('isometric');
             this.loadLesson(nextIdx, true);
         });
         document.getElementById('qcl-reload-lesson')?.addEventListener('click', () => {
+            this.switchStageMode('isometric');
             this.loadLesson(this.currentLessonIndex, true);
         });
 
@@ -2070,7 +2812,7 @@ class QuantumCircuitLabUI {
                 mathToggleBtn.classList.toggle('active', this.showFormalMath);
                 mathToggleBtn.setAttribute('aria-pressed', String(this.showFormalMath));
                 const lbl = document.getElementById('qcl-toggle-math-label');
-                if (lbl) lbl.textContent = this.showFormalMath ? 'Hide Formal Math ▲' : 'Show Formal Math ▼';
+                if (lbl) lbl.textContent = this.showFormalMath ? 'Matrix & Table ▲' : 'Matrix & Table ▼';
                 this.refreshSimulationAndViews(false);
             });
         }
@@ -2078,7 +2820,7 @@ class QuantumCircuitLabUI {
         // Qubit Add / Remove
         document.getElementById('qcl-add-qubit')?.addEventListener('click', () => {
             if (this.numQubits >= 4) {
-                this.showValidationBanner('Up to 4 physical Xmon transmon qubits can be mounted on this interactive QPU bench.');
+                this.showValidationBanner('Up to 4 qubits with 3D Bloch sphere pedestals can be displayed simultaneously on the stage.');
                 return;
             }
             this.hideValidationBanner();
@@ -2090,7 +2832,7 @@ class QuantumCircuitLabUI {
 
         document.getElementById('qcl-remove-qubit')?.addEventListener('click', () => {
             if (this.numQubits <= 1) {
-                this.showValidationBanner('At least 1 physical transmon qubit (Q0) is required on the QPU chip.');
+                this.showValidationBanner('At least 1 qubit wire (q0) is required on the stage.');
                 return;
             }
             this.hideValidationBanner();
@@ -2116,9 +2858,18 @@ class QuantumCircuitLabUI {
             this.refreshAll();
         });
 
-        document.getElementById('qcl-preset-bell')?.addEventListener('click', () => this.loadLesson(3, true));
-        document.getElementById('qcl-preset-ghz')?.addEventListener('click', () => this.loadLesson(5, true));
-        document.getElementById('qcl-preset-interf')?.addEventListener('click', () => this.loadLesson(2, true));
+        document.getElementById('qcl-preset-bell')?.addEventListener('click', () => {
+            this.switchStageMode('isometric');
+            this.loadLesson(2, true);
+        });
+        document.getElementById('qcl-preset-teleport')?.addEventListener('click', () => {
+            this.switchStageMode('isometric');
+            this.loadLesson(4, true);
+        });
+        document.getElementById('qcl-preset-interf')?.addEventListener('click', () => {
+            this.switchStageMode('isometric');
+            this.loadLesson(3, true);
+        });
 
         document.getElementById('qcl-validation-close')?.addEventListener('click', () => this.hideValidationBanner());
 
