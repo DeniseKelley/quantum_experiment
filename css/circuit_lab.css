@@ -2117,3 +2117,333 @@ body.circuit-lab-mode #nametags-layer {
     color: #5f6368;
     line-height: 1.38;
 }
+
+/* ============================================================================
+   11. INITIAL STATE |ψ₀⟩ PICKER BAR & EXPANDABLE SLICE CALCULATION BREAKDOWN
+   ============================================================================ */
+.qcl-init-state-picker-bar {
+    background: #f0f7ff;
+    border: 1.5px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 9px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.qcl-init-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.qcl-init-picker-title {
+    font-size: 11.5px;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.qcl-init-picker-title span {
+    color: #475569;
+    font-size: 11px;
+}
+
+.qcl-init-reg-presets {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.qcl-init-preset-label {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #1e40af;
+    margin-right: 2px;
+}
+
+.qcl-init-reg-btn {
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid #93c5fd;
+    background: #ffffff;
+    color: #1d4ed8;
+    font-family: 'Fira Code', monospace;
+    font-size: 10.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 120ms ease;
+}
+
+.qcl-init-reg-btn:hover {
+    background: #1a73e8;
+    color: #ffffff;
+    border-color: #1a73e8;
+}
+
+.qcl-init-wires-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.qcl-init-wire-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-radius: 9px;
+    padding: 4px 9px;
+}
+
+.qcl-init-wire-badge {
+    font-size: 11px;
+    font-weight: 800;
+    color: #0f172a;
+    min-width: 68px;
+}
+
+.qcl-init-pill-group {
+    display: flex;
+    gap: 3px;
+}
+
+.qcl-init-choice-pill {
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 120ms ease;
+}
+
+.qcl-init-choice-pill:hover {
+    border-color: #38bdf8;
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.qcl-init-choice-pill.active {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.28);
+}
+
+.qcl-init-formula-tag {
+    font-family: 'Fira Code', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #0369a1;
+    background: #e0f2fe;
+    padding: 2px 7px;
+    border-radius: 5px;
+}
+
+/* Expandable Slice Calculation Breakdown in Right Panel & Below 3D Stage */
+.qcl-deriv-expand-btn {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 9.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 120ms ease;
+}
+
+.qcl-deriv-expand-btn:hover {
+    background: #1a73e8;
+    color: #ffffff;
+    border-color: #1a73e8;
+}
+
+.qcl-deriv-expanded-calc {
+    margin: 7px 0;
+    padding: 8px 10px;
+    background: #f8fafc;
+    border: 1.5px solid #bae6fd;
+    border-left: 4px solid #0284c7;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.qcl-deriv-expanded-banner {
+    font-size: 11px;
+    color: #0369a1;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #cbd5e1;
+}
+
+.calc-detail-section {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 7px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.calc-detail-heading {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #1e40af;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 2px;
+}
+
+.calc-detail-line {
+    font-size: 11.2px;
+    color: #334155;
+    line-height: 1.48;
+}
+
+.calc-detail-line.calc-line-active {
+    color: #0f172a;
+    background: #f0fdf4;
+    border-left: 3px solid #22c55e;
+    padding: 3px 7px;
+    border-radius: 4px;
+}
+
+.calc-detail-line.calc-line-zero {
+    color: #64748b;
+    font-size: 10.5px;
+}
+
+.calc-detail-line.calc-line-interference {
+    background: #fef3c7;
+    border-left: 3px solid #f59e0b;
+    color: #92400e;
+    padding: 4px 8px;
+    border-radius: 5px;
+}
+
+.calc-rule-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 4px 8px;
+    border-radius: 5px;
+    margin-bottom: 3px;
+}
+
+.calc-detail-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.calc-ket-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #e0f2fe;
+    border: 1px solid #7dd3fc;
+    color: #0c4a6e;
+    font-weight: 800;
+    font-size: 11px;
+}
+
+.calc-dec-hint {
+    color: #64748b;
+    font-size: 10px;
+    font-family: monospace;
+}
+
+/* Center Active Slice Calculation Panel below the 3D Stage */
+.qcl-active-slice-calc-panel {
+    background: #f8fafd;
+    border: 1.5px solid #bae6fd;
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.qcl-center-slice-calc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.qcl-csc-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: #0f172a;
+}
+
+.qcl-csc-slice-tabs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.qcl-csc-hint {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.qcl-csc-slice-tab {
+    padding: 4px 10px;
+    border-radius: 7px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    font-size: 11.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 120ms ease;
+}
+
+.qcl-csc-slice-tab:hover {
+    border-color: #0284c7;
+    color: #0284c7;
+}
+
+.qcl-csc-slice-tab.active {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+}
+
+.qcl-center-slice-calc-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.qcl-csc-detailed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 8px;
+}

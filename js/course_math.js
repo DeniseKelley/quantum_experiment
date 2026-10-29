@@ -82,6 +82,7 @@ class QuantumMathDerivationEngine {
                 ...(hasSuperposInit ? [`= ${initExpandedTerms.join(' ⊗ ')}`] : []),
                 `= ${MathFmt.boxed(this.formatStatePrettyHTML(snap0.basisStates))}`
             ],
+            detailedBreakdownHTML: this.buildInitialSliceDetailedBreakdown(numQubits, initialStates, snap0),
             bornSummary: this.formatBornSummaryHTML(snap0.basisStates)
         });
 
@@ -112,6 +113,13 @@ class QuantumMathDerivationEngine {
                     algebraLines: [
                         `${sliceLabel} = ${prevLabel} = ${MathFmt.boxed(this.formatStatePrettyHTML(snap.basisStates))}`
                     ],
+                    detailedBreakdownHTML: `
+                        <div class="calc-detail-section">
+                            <div class="calc-detail-heading">1. Identity Evolution (No Gates in Step t = ${s})</div>
+                            <div class="calc-detail-line">Since no gate is placed in column t = ${s}, every wire acts as the 2×2 identity matrix <code>I = |0⟩⟨0| + |1⟩⟨1|</code>.</div>
+                            <div class="calc-detail-line">Therefore every amplitude remains unchanged: <code>⟨x|ψ<sub>${s}</sub>⟩ = ⟨x|ψ<sub>${s - 1}</sub>⟩</code>.</div>
+                        </div>
+                    `,
                     bornSummary: this.formatBornSummaryHTML(snap.basisStates)
                 });
                 continue;
@@ -139,6 +147,7 @@ class QuantumMathDerivationEngine {
                     ...substitutionSteps,
                     `= ${MathFmt.boxed(this.formatStatePrettyHTML(snap.basisStates))}`
                 ],
+                detailedBreakdownHTML: this.buildStepSliceDetailedBreakdown(s, numQubits, prevSnap, snap, stepGates, opDesc),
                 bornSummary: this.formatBornSummaryHTML(snap.basisStates)
             });
         }
@@ -221,6 +230,243 @@ class QuantumMathDerivationEngine {
             tensorOp,
             rulesHtml: rules.join('<br>')
         };
+    }
+
+    /**
+     * Generates a complete, line-by-line calculation breakdown for Slice 0 (|ψ₀⟩)
+     * showing single-qubit column vectors, Kronecker product multiplication for every basis ket,
+     * and Born rule probability verification.
+     */
+    static buildInitialSliceDetailedBreakdown(numQubits, initialStates, snap0) {
+        const singleQubitSpecs = {
+            '|0⟩': { formula: '1|0⟩ + 0|1⟩', c0: '1', c1: '0', v0: new Complex(1, 0), v1: new Complex(0, 0) },
+            '|1⟩': { formula: '0|0⟩ + 1|1⟩', c0: '0', c1: '1', v0: new Complex(0, 0), v1: new Complex(1, 0) },
+            '|+⟩': {
+                formula: `${MathFmt.frac('1', '√2')}|0⟩ + ${MathFmt.frac('1', '√2')}|1⟩`,
+                c0: '1/√2',
+                c1: '1/√2',
+                v0: new Complex(Math.SQRT1_2, 0),
+                v1: new Complex(Math.SQRT1_2, 0)
+            },
+            '|−⟩': {
+                formula: `${MathFmt.frac('1', '√2')}|0⟩ − ${MathFmt.frac('1', '√2')}|1⟩`,
+                c0: '1/√2',
+                c1: '−1/√2',
+                v0: new Complex(Math.SQRT1_2, 0),
+                v1: new Complex(-Math.SQRT1_2, 0)
+            },
+            '|+i⟩': {
+                formula: `${MathFmt.frac('1', '√2')}|0⟩ + ${MathFmt.frac('i', '√2')}|1⟩`,
+                c0: '1/√2',
+                c1: 'i/√2',
+                v0: new Complex(Math.SQRT1_2, 0),
+                v1: new Complex(0, Math.SQRT1_2)
+            },
+            '|−i⟩': {
+                formula: `${MathFmt.frac('1', '√2')}|0⟩ − ${MathFmt.frac('i', '√2')}|1⟩`,
+                c0: '1/√2',
+                c1: '−i/√2',
+                v0: new Complex(Math.SQRT1_2, 0),
+                v1: new Complex(0, -Math.SQRT1_2)
+            }
+        };
+
+        const wireLines = [];
+        const wireSpecs = [];
+        for (let q = 0; q < numQubits; q++) {
+            const key = initialStates[q] || '|0⟩';
+            const spec = singleQubitSpecs[key] || singleQubitSpecs['|0⟩'];
+            wireSpecs.push(spec);
+            wireLines.push(
+                `<div class="calc-detail-line">• <strong>Wire q${q} (${key}):</strong> <code>|ψ<sub>q${q}</sub>⟩ = ${spec.formula} = [ ${spec.c0}, ${spec.c1} ]ᵀ</code></div>`
+            );
+        }
+
+        // Kronecker product term-by-term calculation
+        const tensorLines = snap0.basisStates.map(b => {
+            const bits = b.bitstring.split('');
+            const factorStrings = bits.map((bit, q) => {
+                const spec = wireSpecs[q];
+                const sym = bit === '0' ? spec.c0 : spec.c1;
+                return `(${sym})<sub>q${q}=${bit}</sub>`;
+            });
+            const ampHtml = this.formatAmpHTML(b.amplitude, false);
+            const decStr = b.amplitude.formatCartesian(3);
+            const isNonZero = b.magnitude > 1e-6;
+            return `
+                <div class="calc-detail-line ${isNonZero ? 'calc-line-active' : 'calc-line-zero'}">
+                    <code>α<sub>${b.bitstring}</sub></code> (for ${MathFmt.ket(b.bitstring)}) = ${factorStrings.join(' × ')} = <strong>${ampHtml}</strong> ${
+                isNonZero && ampHtml !== decStr ? `<span class="calc-dec-hint">(${decStr})</span>` : ''
+            }
+                </div>
+            `;
+        });
+
+        // Born rule probability lines
+        const bornLines = snap0.basisStates
+            .filter(b => b.magnitude > 1e-6)
+            .map(b => {
+                const ampHtml = this.formatAmpHTML(b.amplitude, false);
+                const reSq = (b.amplitude.re * b.amplitude.re).toFixed(3).replace(/\.?0+$/, '');
+                const imSq = (b.amplitude.im * b.amplitude.im).toFixed(3).replace(/\.?0+$/, '');
+                const pct = (b.probability * 100).toFixed(1).replace(/\.0$/, '');
+                return `
+                    <div class="calc-detail-line calc-line-active">
+                        <code>P(${b.bitstring})</code> = |⟨${b.bitstring}|ψ₀⟩|² = |${ampHtml}|² = ${reSq}${
+                    Math.abs(b.amplitude.im) > 1e-6 ? ` + ${imSq}` : ''
+                } = <strong>${b.probability.toFixed(3).replace(/\.?0+$/, '')} (${pct}%)</strong>
+                    </div>
+                `;
+            });
+
+        return `
+            <div class="calc-detail-section">
+                <div class="calc-detail-heading">Step 1 — Single-Qubit Input Vectors</div>
+                ${wireLines.join('')}
+            </div>
+            <div class="calc-detail-section">
+                <div class="calc-detail-heading">Step 2 — Tensor Product (Kronecker) Multiplication: α<sub>x</sub> = ∏ ⟨x<sub>k</sub>|q<sub>k</sub>⟩</div>
+                ${tensorLines.join('')}
+            </div>
+            <div class="calc-detail-section">
+                <div class="calc-detail-heading">Step 3 — Born Rule Probability Calculation: P(x) = |α<sub>x</sub>|² = Re(α<sub>x</sub>)² + Im(α<sub>x</sub>)²</div>
+                ${bornLines.join('')}
+            </div>
+        `;
+    }
+
+    /**
+     * Generates a complete, line-by-line calculation breakdown for Slice s (|ψ_s⟩ = U_s |ψ_{s-1}⟩)
+     * showing input kets, how each gate transforms each ket, how like terms combine/interfere,
+     * and how Born probabilities are computed.
+     */
+    static buildStepSliceDetailedBreakdown(stepIdx, numQubits, prevSnap, snap, stepGates, opDesc) {
+        const activePrev = prevSnap.basisStates.filter(b => b.magnitude > 1e-6);
+        const activeNext = snap.basisStates.filter(b => b.magnitude > 1e-6);
+
+        // 1. Input terms from previous slice
+        const inputLines = activePrev.map(b => {
+            const ampHtml = this.formatAmpHTML(b.amplitude, false);
+            return `<span class="calc-ket-pill">${ampHtml}${MathFmt.ket(b.bitstring)} <small>(${b.amplitude.formatCartesian(3)})</small></span>`;
+        });
+
+        // 2. How each gate in this column transforms each active input ket
+        const transformLines = [];
+        if (snap.collapseEvents && snap.collapseEvents.length > 0) {
+            snap.collapseEvents.forEach(ev => {
+                const pct = (ev.probability * 100).toFixed(1);
+                transformLines.push(`
+                    <div class="calc-detail-line calc-line-active">
+                        • <strong>Projective Measurement on Wire q${ev.qubit}:</strong><br>
+                        Born probability of measuring <code>|${ev.outcome}⟩</code> on q${ev.qubit} is <code>P(q${ev.qubit}=${ev.outcome}) = ∑<sub>x: x[${ev.qubit}]=${ev.outcome}</sub> |α<sub>x</sub>|² = ${ev.probability.toFixed(4)} (${pct}%)</code>.<br>
+                        We project onto subspace <code>q${ev.qubit} = |${ev.outcome}⟩</code> and divide surviving amplitudes by <code>√P = √(${ev.probability.toFixed(4)}) = ${Math.sqrt(ev.probability).toFixed(4)}</code>.
+                    </div>
+                `);
+            });
+        } else {
+            activePrev.forEach(b => {
+                const inAmpHtml = this.formatAmpHTML(b.amplitude, false);
+                const bits = b.bitstring.split('');
+                const gateNotes = [];
+
+                stepGates.forEach(g => {
+                    const bVal = bits[g.qubit];
+                    if (g.type === 'H') {
+                        gateNotes.push(
+                            `H<sub>q${g.qubit}</sub>|${bVal}⟩ = ${MathFmt.frac('1', '√2')}(|0⟩ ${bVal === '0' ? '+' : '−'} |1⟩)`
+                        );
+                    } else if (g.type === 'X') {
+                        const flipped = bVal === '0' ? '1' : '0';
+                        gateNotes.push(`X<sub>q${g.qubit}</sub>|${bVal}⟩ = |${flipped}⟩ (bit flip)`);
+                    } else if (g.type === 'Y') {
+                        const flipped = bVal === '0' ? '1' : '0';
+                        const phase = bVal === '0' ? 'i' : '−i';
+                        gateNotes.push(`Y<sub>q${g.qubit}</sub>|${bVal}⟩ = ${phase}|${flipped}⟩`);
+                    } else if (g.type === 'Z') {
+                        gateNotes.push(`Z<sub>q${g.qubit}</sub>|${bVal}⟩ = ${bVal === '1' ? '−' : '+'}|${bVal}⟩`);
+                    } else if (g.type === 'S') {
+                        gateNotes.push(`S<sub>q${g.qubit}</sub>|${bVal}⟩ = ${bVal === '1' ? 'i' : '1'}|${bVal}⟩`);
+                    } else if (g.type === 'T') {
+                        gateNotes.push(`T<sub>q${g.qubit}</sub>|${bVal}⟩ = ${bVal === '1' ? 'e<sup>iπ/4</sup>' : '1'}|${bVal}⟩`);
+                    } else if (g.type === 'Rx' || g.type === 'Ry' || g.type === 'Rz') {
+                        gateNotes.push(`${g.type}(${formatRadiansShort(g.theta)}) acts on q${g.qubit}=|${bVal}⟩`);
+                    } else if (g.type === 'CNOT') {
+                        const cVal = Number(bits[g.qubit]);
+                        const tVal = Number(bits[g.targetQubit]);
+                        const newT = cVal ^ tVal;
+                        gateNotes.push(
+                            `CNOT(c=q${g.qubit}=${cVal}, t=q${g.targetQubit}=${tVal}) → target becomes t⊕c = ${tVal}⊕${cVal} = <strong>${newT}</strong>`
+                        );
+                    } else if (g.type === 'CZ') {
+                        const cVal = Number(bits[g.qubit]);
+                        const tVal = Number(bits[g.targetQubit]);
+                        gateNotes.push(
+                            `CZ(q${g.qubit}=${cVal}, q${g.targetQubit}=${tVal}) → phase factor <strong>${
+                                cVal === 1 && tVal === 1 ? '−1 (both are 1)' : '+1'
+                            }</strong>`
+                        );
+                    } else if (g.type === 'SWAP') {
+                        gateNotes.push(
+                            `SWAP exchanges q${g.qubit}=|${bits[g.qubit]}⟩ and q${g.targetQubit}=|${bits[g.targetQubit]}⟩`
+                        );
+                    }
+                });
+
+                transformLines.push(`
+                    <div class="calc-detail-line">
+                        • Input term <strong>${inAmpHtml}${MathFmt.ket(b.bitstring)}</strong>: ${gateNotes.join(' ; ')}
+                    </div>
+                `);
+            });
+        }
+
+        // 3. Final Resulting Amplitudes & Born Rule Probabilities in Slice s
+        const outputLines = activeNext.map(b => {
+            const ampHtml = this.formatAmpHTML(b.amplitude, false);
+            const decStr = b.amplitude.formatCartesian(3);
+            const reSq = (b.amplitude.re * b.amplitude.re).toFixed(4).replace(/\.?0+$/, '') || '0';
+            const imSq = (b.amplitude.im * b.amplitude.im).toFixed(4).replace(/\.?0+$/, '') || '0';
+            const probStr = b.probability.toFixed(4).replace(/\.?0+$/, '') || '0';
+            const pct = (b.probability * 100).toFixed(1).replace(/\.0$/, '');
+            return `
+                <div class="calc-detail-line calc-line-active">
+                    • Basis ${MathFmt.ket(b.bitstring)}: amplitude <code>α<sub>${b.bitstring}</sub> = <strong>${ampHtml}</strong></code> <span class="calc-dec-hint">(${decStr})</span>
+                    &nbsp;⟹&nbsp; Born Prob <code>P(${b.bitstring}) = |α<sub>${b.bitstring}</sub>|² = ${reSq}${
+                Math.abs(b.amplitude.im) > 1e-6 ? ` + ${imSq}` : ''
+            } = <strong>${probStr} (${pct}%)</strong></code>
+                </div>
+            `;
+        });
+
+        // Also check if any previously non-zero state cancelled to 0 (destructive interference!)
+        const cancelledStates = prevSnap.basisStates.filter(
+            (pb, idx) => pb.magnitude > 1e-6 && snap.basisStates[idx].magnitude <= 1e-6 && stepGates.some(g => g.type === 'H' || g.type === 'Rx' || g.type === 'Ry')
+        );
+        if (cancelledStates.length > 0 && activePrev.length >= 2) {
+            outputLines.push(`
+                <div class="calc-detail-line calc-line-interference">
+                    ✨ <strong>Quantum Interference Note:</strong> Amplitudes with opposite signs (+ and −) added destructively to <code>0</code> on basis state(s) ${cancelledStates
+                .map(c => MathFmt.ket(c.bitstring))
+                .join(', ')}, while constructive interference reinforced the surviving state(s)!
+                </div>
+            `);
+        }
+
+        return `
+            <div class="calc-detail-section">
+                <div class="calc-detail-heading">Step 1 — Input State Entering Slice ${stepIdx} (|ψ<sub>${stepIdx - 1}</sub>⟩)</div>
+                <div class="calc-detail-pills">${inputLines.join(' ')}</div>
+            </div>
+            <div class="calc-detail-section">
+                <div class="calc-detail-heading">Step 2 — Gate Rule &amp; Action on Each Input Basis Ket (${opDesc.tensorOp})</div>
+                <div class="calc-detail-line calc-rule-box">${opDesc.rulesHtml}</div>
+                ${transformLines.join('')}
+            </div>
+            <div class="calc-detail-section">
+                <div class="calc-detail-heading">Step 3 — Resulting Amplitudes α<sub>x</sub> &amp; Born Rule Probabilities P(x) = |α<sub>x</sub>|² in |ψ<sub>${stepIdx}</sub>⟩</div>
+                ${outputLines.join('')}
+            </div>
+        `;
     }
 
     /**

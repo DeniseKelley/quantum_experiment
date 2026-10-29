@@ -201,7 +201,7 @@ class QuantumCircuitLabUI {
                         <div class="qcl-card qcl-isometric-stage-card">
                             <div class="qcl-chip-card-header">
                                 <div>
-                                    <span class="qcl-eyebrow-tag">DRAG &amp; DROP GATES DIRECTLY ONTO THE 3D STAGE • CLICK ANY WIRE SLOT OR ↑ |ψₖ⟩ SLICE</span>
+                                    <span class="qcl-eyebrow-tag">DRAG &amp; DROP GATES DIRECTLY ONTO THE 3D STAGE • CLICK ANY ↑ |ψₖ⟩ SLICE TO EXPAND FULL MATH</span>
                                     <h3 class="qcl-card-title">Glowing 3D Bloch Sphere Pedestals, Drag-and-Drop Standing Gates &amp; Classical Readout Bus</h3>
                                 </div>
 
@@ -220,11 +220,14 @@ class QuantumCircuitLabUI {
                                 </div>
 
                                 <div class="qcl-chip-legend">
-                                    <span class="chip-leg-item"><i class="leg-dot leg-cyan"></i> Left Pedestal / |0⟩ Pill: Cycle Init State</span>
-                                    <span class="chip-leg-item"><i class="leg-dot leg-gold"></i> Drag Gate from Palette or Click (+) Pad</span>
-                                    <span class="chip-leg-item"><i class="leg-dot leg-purple"></i> Slice ↑ |ψₖ⟩: Inspect Step Algebra</span>
+                                    <span class="chip-leg-item"><i class="leg-dot leg-cyan"></i> Choose Initial State |ψ₀⟩ Below</span>
+                                    <span class="chip-leg-item"><i class="leg-dot leg-gold"></i> Drag Gate onto 3D Wire or Click (+)</span>
+                                    <span class="chip-leg-item"><i class="leg-dot leg-purple"></i> Click ↑ |ψₖ⟩ Slice to Expand Calculations</span>
                                 </div>
                             </div>
+
+                            <!-- Interactive Initial State |ψ₀⟩ Selector Bar (Per-Qubit Pills + Whole-Register Presets) -->
+                            <div class="qcl-init-state-picker-bar" id="qcl-init-state-picker-bar"></div>
 
                             <!-- Large Unified Interactive Isometric 3D Stage SVG (with Drag-and-Drop + Classical Bus) -->
                             <div class="qcl-isometric-stage-wrap" id="qcl-physical-chip-stage"></div>
@@ -240,6 +243,9 @@ class QuantumCircuitLabUI {
                                 </div>
                                 <div class="qcl-timeline-steps" id="qcl-timeline-steps"></div>
                             </div>
+
+                            <!-- Expanded Step-by-Step Calculation Drawer for Clicked Slice |ψ_k⟩ -->
+                            <div class="qcl-active-slice-calc-panel" id="qcl-active-slice-calc-panel"></div>
                         </div>
                     </div>
 
@@ -1005,22 +1011,26 @@ class QuantumCircuitLabUI {
             });
         });
 
-        // 2) Clicking a Top Pulse Column Header jumps to that step!
+        // 2) Clicking a Top Pulse Column Header jumps to that step and expands its calculation!
         stage.querySelectorAll('.iso-step-col-header').forEach(hdr => {
             hdr.addEventListener('click', e => {
                 e.stopPropagation();
                 this.stopAutoPlay();
                 this.activeStepIndex = Number(hdr.dataset.step) + 1;
+                if (!this.expandedSliceSet) this.expandedSliceSet = new Set();
+                this.expandedSliceSet.add(this.activeStepIndex);
                 this.refreshAll();
             });
         });
 
-        // 3) Clicking any ↑ |ψ_k⟩ slice marker jumps the timeline & math derivation to step k!
+        // 3) Clicking any ↑ |ψ_k⟩ slice marker jumps the timeline & expands that slice's full calculation!
         stage.querySelectorAll('.iso-slice-marker-group').forEach(marker => {
             marker.addEventListener('click', e => {
                 e.stopPropagation();
                 this.stopAutoPlay();
                 this.activeStepIndex = Number(marker.dataset.sliceStep);
+                if (!this.expandedSliceSet) this.expandedSliceSet = new Set();
+                this.expandedSliceSet.add(this.activeStepIndex);
                 this.refreshAll();
             });
         });
@@ -2420,6 +2430,7 @@ class QuantumCircuitLabUI {
         this.activeStepIndex = Math.max(0, Math.min(this.activeStepIndex, maxSnapIdx));
         const activeSnap = this.lastSimResult.snapshots[this.activeStepIndex];
 
+        this.renderInitialStatePickerBar();
         this.renderPhysicalQuantumChip(activeSnap);
         this.renderTimelineBar(this.lastSimResult.snapshots);
         this.renderStatevectorAndMath(activeSnap);
@@ -2441,6 +2452,118 @@ class QuantumCircuitLabUI {
         this.updateUndoRedoButtons();
     }
 
+    /**
+     * Renders the Interactive Initial State |ψ₀⟩ Preparation Bar right above the 3D Stage
+     * Lets the user directly choose |0⟩, |1⟩, |+⟩, |−⟩, |+i⟩, |−i⟩ for each qubit Q0..Qn
+     * or pick a 1-click multi-qubit register preset (|00⟩, |01⟩, |10⟩, |11⟩, |+0⟩, |++⟩, |+−⟩).
+     */
+    renderInitialStatePickerBar() {
+        const container = document.getElementById('qcl-init-state-picker-bar');
+        if (!container) return;
+
+        const stateKeys = ['|0⟩', '|1⟩', '|+⟩', '|−⟩', '|+i⟩', '|−i⟩'];
+        const stateFormulas = {
+            '|0⟩': '[1, 0]ᵀ',
+            '|1⟩': '[0, 1]ᵀ',
+            '|+⟩': '(|0⟩+|1⟩)/√2',
+            '|−⟩': '(|0⟩−|1⟩)/√2',
+            '|+i⟩': '(|0⟩+i|1⟩)/√2',
+            '|−i⟩': '(|0⟩−i|1⟩)/√2'
+        };
+
+        let wireRowsHtml = '';
+        for (let q = 0; q < this.numQubits; q++) {
+            const currentInit = this.initialStates[q] || '|0⟩';
+            wireRowsHtml += `
+                <div class="qcl-init-wire-picker-row">
+                    <span class="qcl-init-wire-badge">Wire Q<sub>${q}</sub> Init:</span>
+                    <div class="qcl-init-pill-group">
+                        ${stateKeys
+                            .map(
+                                k => `
+                            <button class="qcl-init-choice-pill ${currentInit === k ? 'active' : ''}"
+                                    data-init-qubit="${q}"
+                                    data-init-val="${k}"
+                                    title="Set Wire Q${q} initial state to ${k} = ${stateFormulas[k]}">
+                                ${k}
+                            </button>
+                        `
+                            )
+                            .join('')}
+                    </div>
+                    <span class="qcl-init-formula-tag">${currentInit} = ${stateFormulas[currentInit] || '[1, 0]ᵀ'}</span>
+                </div>
+            `;
+        }
+
+        let regPresetsHtml = '';
+        if (this.numQubits >= 2) {
+            const presets2Q = [
+                { label: '|00⟩', states: ['|0⟩', '|0⟩'] },
+                { label: '|01⟩', states: ['|0⟩', '|1⟩'] },
+                { label: '|10⟩', states: ['|1⟩', '|0⟩'] },
+                { label: '|11⟩', states: ['|1⟩', '|1⟩'] },
+                { label: '|+0⟩', states: ['|+⟩', '|0⟩'] },
+                { label: '|++⟩', states: ['|+⟩', '|+⟩'] },
+                { label: '|+−⟩', states: ['|+⟩', '|−⟩'] }
+            ];
+            regPresetsHtml = `
+                <div class="qcl-init-reg-presets">
+                    <span class="qcl-init-preset-label">Quick |ψ₀⟩ Register:</span>
+                    ${presets2Q
+                        .map(
+                            p => `
+                        <button class="qcl-init-reg-btn" data-reg-states='${JSON.stringify(p.states)}' title="Set initial state |ψ₀⟩ to ${p.label}">
+                            ${p.label}
+                        </button>
+                    `
+                        )
+                        .join('')}
+                </div>
+            `;
+        }
+
+        container.innerHTML = `
+            <div class="qcl-init-picker-header">
+                <div class="qcl-init-picker-title">
+                    <span class="qcl-init-icon">🎯</span>
+                    <strong>Choose Initial State |ψ₀⟩ (t = 0):</strong>
+                    <span>Click any state below (or click the Left 3D Bloch Pedestals) to prepare your input qubits</span>
+                </div>
+                ${regPresetsHtml}
+            </div>
+            <div class="qcl-init-wires-grid">
+                ${wireRowsHtml}
+            </div>
+        `;
+
+        container.querySelectorAll('.qcl-init-choice-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const q = Number(btn.dataset.initQubit);
+                const val = btn.dataset.initVal;
+                if (this.initialStates[q] === val) return;
+                this.pushUndoState();
+                this.initialStates[q] = val;
+                this.refreshAll();
+            });
+        });
+
+        container.querySelectorAll('.qcl-init-reg-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                try {
+                    const states = JSON.parse(btn.dataset.regStates);
+                    this.pushUndoState();
+                    for (let q = 0; q < this.numQubits; q++) {
+                        this.initialStates[q] = states[q] || '|0⟩';
+                    }
+                    this.refreshAll();
+                } catch (e) {
+                    // ignore
+                }
+            });
+        });
+    }
+
     renderTimelineBar(snapshots) {
         const container = document.getElementById('qcl-timeline-steps');
         if (!container) return;
@@ -2458,8 +2581,8 @@ class QuantumCircuitLabUI {
                 return `
                     <button class="qcl-timeline-pill ${isActive ? 'active' : ''} ${hasGates ? 'has-op' : ''}"
                             data-step-idx="${snap.stepIndex}"
-                            title="Step t=${snap.stepIndex}: ${snap.description}">
-                        <span class="tl-step-num">t=${snap.stepIndex}</span>
+                            title="Click to inspect & expand calculations for Slice |ψ${snap.stepIndex}⟩ (Step t=${snap.stepIndex})">
+                        <span class="tl-step-num">|ψ<sub>${snap.stepIndex}</sub>⟩</span>
                         <span class="tl-step-op">${gateLabel}</span>
                     </button>
                 `;
@@ -2470,6 +2593,8 @@ class QuantumCircuitLabUI {
             pill.addEventListener('click', () => {
                 this.stopAutoPlay();
                 this.activeStepIndex = Number(pill.dataset.stepIdx);
+                if (!this.expandedSliceSet) this.expandedSliceSet = new Set();
+                this.expandedSliceSet.add(this.activeStepIndex);
                 this.refreshAll();
             });
         });
@@ -2486,6 +2611,11 @@ class QuantumCircuitLabUI {
         const ampGrid = document.getElementById('qcl-amplitudes-grid');
         const derivList = document.getElementById('qcl-step-derivation-list');
         const proofBox = document.getElementById('qcl-entanglement-proof-box');
+        const centerSliceCalcPanel = document.getElementById('qcl-active-slice-calc-panel');
+
+        if (!this.expandedSliceSet) {
+            this.expandedSliceSet = new Set([this.activeStepIndex]);
+        }
 
         if (eyebrow) {
             eyebrow.textContent = snap.stepIndex === 0 ? 'SLICE |ψ₀⟩ (INITIAL STATE t = 0)' : `SLICE |ψ${snap.stepIndex}⟩ (AFTER STEP t = ${snap.stepIndex})`;
@@ -2519,7 +2649,8 @@ class QuantumCircuitLabUI {
         }
 
         // 1. Render Step-by-Step Algebraic Derivation Cards (|ψ₀⟩ → |ψ₁⟩ → |ψ₂⟩ ...)
-        if (derivList && typeof QuantumMathDerivationEngine !== 'undefined' && this.lastSimResult) {
+        //    Each slice card can be clicked to expand/collapse its full step-by-step calculation breakdown!
+        if (typeof QuantumMathDerivationEngine !== 'undefined' && this.lastSimResult) {
             const steps = QuantumMathDerivationEngine.generateCircuitDerivation(
                 {
                     numQubits: this.numQubits,
@@ -2530,31 +2661,119 @@ class QuantumCircuitLabUI {
                 this.activeStepIndex
             );
 
-            derivList.innerHTML = steps
-                .map(
-                    st => `
-                <div class="qcl-deriv-step-card ${st.isActive ? 'active-deriv-step' : ''}" data-deriv-step="${st.stepIndex}">
-                    <div class="qcl-deriv-card-header">
-                        <span class="qcl-deriv-slice-pill">${st.sliceLabel}</span>
-                        <span class="qcl-deriv-card-title">${st.title}</span>
-                    </div>
-                    <div class="qcl-deriv-rule">${st.ruleExplanation}</div>
-                    <div class="qcl-deriv-algebra-box">
-                        ${st.algebraLines.map(line => `<div class="qcl-deriv-eq-line">${line}</div>`).join('')}
-                    </div>
-                    <div class="qcl-deriv-born-row">${st.bornSummary}</div>
-                </div>
-            `
-                )
-                .join('');
+            // Always ensure the active slice is in expandedSliceSet when selected
+            const activeStepObj = steps.find(st => st.stepIndex === this.activeStepIndex) || steps[steps.length - 1];
 
-            derivList.querySelectorAll('.qcl-deriv-step-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    this.stopAutoPlay();
-                    this.activeStepIndex = Number(card.dataset.derivStep);
-                    this.refreshAll();
+            if (derivList) {
+                derivList.innerHTML = steps
+                    .map(st => {
+                        const isExpanded = this.expandedSliceSet.has(st.stepIndex) || st.isActive;
+                        return `
+                        <div class="qcl-deriv-step-card ${st.isActive ? 'active-deriv-step' : ''} ${isExpanded ? 'is-expanded' : ''}"
+                             data-deriv-step="${st.stepIndex}">
+                            <div class="qcl-deriv-card-header">
+                                <span class="qcl-deriv-slice-pill">${st.sliceLabel}</span>
+                                <span class="qcl-deriv-card-title">${st.title}</span>
+                                <button class="qcl-deriv-expand-btn" data-toggle-slice="${st.stepIndex}" title="Expand or collapse exact step-by-step calculation">
+                                    ${isExpanded ? '▼ Hide Calculation' : '▶ Expand Calculation'}
+                                </button>
+                            </div>
+                            <div class="qcl-deriv-rule">${st.ruleExplanation}</div>
+                            <div class="qcl-deriv-algebra-box">
+                                ${st.algebraLines.map(line => `<div class="qcl-deriv-eq-line">${line}</div>`).join('')}
+                            </div>
+                            ${
+                                isExpanded && st.detailedBreakdownHTML
+                                    ? `
+                                    <div class="qcl-deriv-expanded-calc">
+                                        <div class="qcl-deriv-expanded-banner">
+                                            🔍 <strong>How ${st.sliceLabel} Was Calculated Step-by-Step:</strong>
+                                        </div>
+                                        ${st.detailedBreakdownHTML}
+                                    </div>
+                                `
+                                    : ''
+                            }
+                            <div class="qcl-deriv-born-row">${st.bornSummary}</div>
+                        </div>
+                    `;
+                    })
+                    .join('');
+
+                derivList.querySelectorAll('.qcl-deriv-step-card').forEach(card => {
+                    card.addEventListener('click', e => {
+                        const toggleBtn = e.target.closest('.qcl-deriv-expand-btn');
+                        const stepIdx = Number(card.dataset.derivStep);
+                        this.stopAutoPlay();
+
+                        if (toggleBtn) {
+                            e.stopPropagation();
+                            if (this.expandedSliceSet.has(stepIdx) && this.activeStepIndex !== stepIdx) {
+                                this.expandedSliceSet.delete(stepIdx);
+                            } else if (this.expandedSliceSet.has(stepIdx) && this.activeStepIndex === stepIdx) {
+                                // Toggle off even for active if explicitly clicked button
+                                this.expandedSliceSet.delete(stepIdx);
+                                card.classList.remove('is-expanded');
+                                const expBox = card.querySelector('.qcl-deriv-expanded-calc');
+                                if (expBox) expBox.style.display = expBox.style.display === 'none' ? 'block' : 'none';
+                                toggleBtn.textContent =
+                                    expBox && expBox.style.display === 'none' ? '▶ Expand Calculation' : '▼ Hide Calculation';
+                                return;
+                            } else {
+                                this.expandedSliceSet.add(stepIdx);
+                            }
+                        } else {
+                            this.activeStepIndex = stepIdx;
+                            this.expandedSliceSet.add(stepIdx);
+                        }
+                        this.refreshAll();
+                    });
                 });
-            });
+            }
+
+            // Also render the Expanded Active Slice Calculation Drawer directly below the 3D Stage!
+            if (centerSliceCalcPanel && activeStepObj) {
+                centerSliceCalcPanel.innerHTML = `
+                    <div class="qcl-center-slice-calc-header">
+                        <div class="qcl-csc-title-group">
+                            <span class="qcl-deriv-slice-pill">${activeStepObj.sliceLabel}</span>
+                            <strong>${activeStepObj.title} — Complete Step-by-Step Calculation Breakdown</strong>
+                        </div>
+                        <div class="qcl-csc-slice-tabs">
+                            <span class="qcl-csc-hint">Click any slice to expand its math:</span>
+                            ${steps
+                                .map(
+                                    st => `
+                                <button class="qcl-csc-slice-tab ${st.stepIndex === activeStepObj.stepIndex ? 'active' : ''}"
+                                        data-csc-step="${st.stepIndex}">
+                                    ↑ ${st.sliceLabel}
+                                </button>
+                            `
+                                )
+                                .join('')}
+                        </div>
+                    </div>
+                    <div class="qcl-center-slice-calc-body">
+                        <div class="qcl-deriv-algebra-box qcl-csc-summary-eq">
+                            ${activeStepObj.algebraLines.map(line => `<div class="qcl-deriv-eq-line">${line}</div>`).join('')}
+                        </div>
+                        <div class="qcl-csc-detailed-grid">
+                            ${activeStepObj.detailedBreakdownHTML || ''}
+                        </div>
+                        <div class="qcl-deriv-born-row">${activeStepObj.bornSummary}</div>
+                    </div>
+                `;
+
+                centerSliceCalcPanel.querySelectorAll('.qcl-csc-slice-tab').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.stopAutoPlay();
+                        const sIdx = Number(btn.dataset.cscStep);
+                        this.activeStepIndex = sIdx;
+                        this.expandedSliceSet.add(sIdx);
+                        this.refreshAll();
+                    });
+                });
+            }
         }
 
         // 2. Render Automatic CSE 4412 Exam 1 Separability / Entanglement Proof
