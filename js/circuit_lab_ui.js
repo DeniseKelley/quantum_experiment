@@ -196,52 +196,40 @@ class QuantumCircuitLabUI {
                         <button class="qcl-val-close" id="qcl-validation-close">&times;</button>
                     </div>
 
-                    <!-- MODE 1: Microsoft Teleportation-Style Isometric 3D Bloch Pedestal & Circuit Stage -->
+                    <!-- MODE 1: Unified Large 3D Isometric Bloch Pedestal & Drag-and-Drop Circuit Stage -->
                     <div id="qcl-stage-pane-isometric" class="qcl-stage-pane">
                         <div class="qcl-card qcl-isometric-stage-card">
                             <div class="qcl-chip-card-header">
                                 <div>
-                                    <span class="qcl-eyebrow-tag">INTERACTIVE 3D ISOMETRIC BLOCH SPHERE &amp; CIRCUIT STAGE (CLICK ANY WIRE SLOT OR ↑ |ψₖ⟩ SLICE)</span>
-                                    <h3 class="qcl-card-title">Glowing 3D Bloch Sphere Pedestals, Standing Isometric Gates &amp; State Slice Evolution</h3>
-                                </div>
-                                <div class="qcl-chip-legend">
-                                    <span class="chip-leg-item"><i class="leg-dot leg-cyan"></i> Left Pedestal: Click to Cycle Init State</span>
-                                    <span class="chip-leg-item"><i class="leg-dot leg-gold"></i> Wire Pad (+): Click to Place Selected Gate</span>
-                                    <span class="chip-leg-item"><i class="leg-dot leg-purple"></i> Slice ↑ |ψₖ⟩: Click to Inspect Step Algebra</span>
-                                </div>
-                            </div>
-
-                            <!-- Interactive Isometric 3D Stage SVG -->
-                            <div class="qcl-isometric-stage-wrap" id="qcl-physical-chip-stage"></div>
-                        </div>
-
-                        <!-- Compact Synchronized Circuit Grid & Timeline Scrubber -->
-                        <div class="qcl-card qcl-composer-card">
-                            <div class="qcl-composer-header-row">
-                                <div>
-                                    <span class="qcl-eyebrow-tag">SYNCHRONIZED GATE TIMELINE &amp; SLICE SCRUBBER</span>
-                                    <h3 class="qcl-card-title">Drag-and-Drop Gate Sequencer &amp; Classical Readout Bus</h3>
+                                    <span class="qcl-eyebrow-tag">DRAG &amp; DROP GATES DIRECTLY ONTO THE 3D STAGE • CLICK ANY WIRE SLOT OR ↑ |ψₖ⟩ SLICE</span>
+                                    <h3 class="qcl-card-title">Glowing 3D Bloch Sphere Pedestals, Drag-and-Drop Standing Gates &amp; Classical Readout Bus</h3>
                                 </div>
 
-                                <!-- Selected Wire Gate Action Bar -->
+                                <!-- Selected Wire Gate Action Bar (docked in header when a 3D gate is selected) -->
                                 <div class="qcl-placed-gate-bar" id="qcl-placed-gate-bar" style="display: none;">
                                     <span class="qcl-pgb-title" id="qcl-pgb-title">Selected Gate</span>
                                     <div class="qcl-pgb-actions">
-                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-left" title="Move left">←</button>
-                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-right" title="Move right">→</button>
-                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-up" title="Move up">↑</button>
-                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-down" title="Move down">↓</button>
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-left" title="Move gate left (earlier step)">←</button>
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-right" title="Move gate right (later step)">→</button>
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-up" title="Move gate up a wire">↑</button>
+                                        <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-down" title="Move gate down a wire">↓</button>
                                         <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-flip" style="display:none;">⇅ Flip Control/Target</button>
                                         <button class="qcl-btn qcl-btn-xs" id="qcl-pgb-cycle-target" style="display:none;">🎯 Target Wire</button>
                                         <button class="qcl-btn qcl-btn-xs qcl-btn-red-outline" id="qcl-pgb-delete">🗑 Remove</button>
                                     </div>
                                 </div>
+
+                                <div class="qcl-chip-legend">
+                                    <span class="chip-leg-item"><i class="leg-dot leg-cyan"></i> Left Pedestal / |0⟩ Pill: Cycle Init State</span>
+                                    <span class="chip-leg-item"><i class="leg-dot leg-gold"></i> Drag Gate from Palette or Click (+) Pad</span>
+                                    <span class="chip-leg-item"><i class="leg-dot leg-purple"></i> Slice ↑ |ψₖ⟩: Inspect Step Algebra</span>
+                                </div>
                             </div>
 
-                            <div class="qcl-circuit-board-wrap">
-                                <div class="qcl-circuit-board" id="qcl-circuit-board"></div>
-                            </div>
+                            <!-- Large Unified Interactive Isometric 3D Stage SVG (with Drag-and-Drop + Classical Bus) -->
+                            <div class="qcl-isometric-stage-wrap" id="qcl-physical-chip-stage"></div>
 
+                            <!-- Synchronized Execution Controls & Slice Timeline Scrubber -->
                             <div class="qcl-timeline-bar">
                                 <div class="qcl-exec-controls">
                                     <button class="qcl-btn qcl-btn-sm" id="qcl-step-start" title="Reset to Initial State |ψ₀⟩ (t=0)">⏮ |ψ₀⟩</button>
@@ -576,13 +564,16 @@ class QuantumCircuitLabUI {
     }
 
     /**
-     * Renders the Microsoft Quantum Teleportation-Style Isometric 3D Bloch Pedestal & Circuit Stage!
-     * Replaces the old chip view with:
-     * - Isometric perspective grid platform (matching ms_teleportation.jpg & scene7_quantum_alg.png)
-     * - Left Input 3D Bloch Sphere Pedestals (click to cycle initial state |0⟩, |1⟩, |+⟩, |−⟩)
-     * - Standing 3D Isometric Gate Prisms (H, X, Y, Z, S, T, Rx, Ry, Rz, CNOT ●—⊕, CZ, SWAP, Measurement gauge with double classical wires)
-     * - Interactive wire landing pads (+) to add gates directly on the pretty diagram
-     * - Class-style vertical state slice markers (↑ |ψ₀⟩, ↑ |ψ₁⟩, ↑ |ψ₂⟩, ...) between every time step
+     * Renders the Unified Large 3D Isometric Bloch Pedestal & Drag-and-Drop Circuit Stage!
+     * Consolidates all interactive composer features directly onto the glowing 3D stage:
+     * - Large isometric perspective grid platform (viewBox 940 × 440+)
+     * - Clickable Top Pulse Column Headers (Pulse t=1 .. t=6)
+     * - Left Input 3D Bloch Sphere Pedestals + Coax Port & Clickable Initial-State Selector (|0⟩, |1⟩, |+⟩, |−⟩, |+i⟩, |−i⟩)
+     * - Full HTML5 Drag-and-Drop from the left Gate Palette directly onto any 3D wire/step slot (with glowing drop-zone highlight)
+     * - Interactive Pointer Drag-and-Drop to rearrange placed 3D gates from one wire/step to another directly on the 3D stage
+     * - Standing 3D Isometric Gate Prisms (H, X, Y, Z, S, T, Rx, Ry, Rz, CNOT ●—⊕, CZ, SWAP, Measurement gauge)
+     * - Integrated Classical Readout Bus (Readout c double wire + live bit values + ⇓ c_q feed-forward badges)
+     * - Vertical State Slice Markers (↑ |ψ₀⟩, ↑ |ψ₁⟩, ..., ↑ |ψ₆⟩)
      * - Right Output 3D Bloch Sphere Pedestals showing live simulated state & entanglement ribbons
      */
     renderPhysicalQuantumChip(snap) {
@@ -591,30 +582,68 @@ class QuantumCircuitLabUI {
 
         const n = this.numQubits;
         const numSteps = this.numSteps;
-        const W = 860;
-        const rowSpacing = n === 1 ? 0 : n === 2 ? 96 : n === 3 ? 74 : 60;
-        const H = Math.max(255, 130 + (n - 1) * rowSpacing + 65);
+        const W = 940;
+        const rowSpacing = n === 1 ? 0 : n === 2 ? 126 : n === 3 ? 96 : 78;
+        const topMargin = n === 1 ? 168 : n === 2 ? 118 : 104;
+        const classicalBusY = topMargin + (n - 1) * rowSpacing + (n === 1 ? 92 : 74);
+        const sliceRowY = classicalBusY + 42;
+        const H = Math.max(430, sliceRowY + 26);
 
-        const leftPedX = 76;
+        const leftPedX = 74;
+        const initBadgeX = 148;
         const rightPedX = W - 78;
-        const wireStartX = leftPedX + 36;
-        const wireEndX = rightPedX - 36;
+        const wireStartX = 196;
+        const wireEndX = rightPedX - 54;
         const stepWidth = (wireEndX - wireStartX) / numSteps;
 
-        const topMargin = n === 1 ? H * 0.45 : 64;
         const wireY = Array.from({ length: n }, (_, q) => topMargin + q * rowSpacing);
-        const sphereR = n <= 2 ? 26 : n === 3 ? 22 : 19;
+        const sphereR = n <= 2 ? 32 : n === 3 ? 26 : 22;
 
-        // 1. Build Isometric Perspective Grid Lines in Background (matching ms_teleportation.jpg & scene7_quantum_alg.png)
+        // 1. Build Isometric Perspective Grid Lines in Background
         let isoGridSvg = '';
-        for (let gx = -240; gx <= W + 240; gx += 44) {
+        for (let gx = -280; gx <= W + 280; gx += 46) {
             isoGridSvg += `
                 <line x1="${gx}" y1="0" x2="${gx + H * 1.15}" y2="${H}" stroke="rgba(56, 189, 248, 0.13)" stroke-width="1" />
                 <line x1="${gx}" y1="${H}" x2="${gx + H * 1.15}" y2="0" stroke="rgba(56, 189, 248, 0.11)" stroke-width="1" />
             `;
         }
 
-        // 2. Entanglement Glow Ribbons between entangled qubit wires on the isometric floor
+        // 2. Top Pulse Step Column Headers (Pulse t=1 .. t=6) — Clickable to inspect step
+        let stepHeadersSvg = `
+            <g class="iso-header-init-tag">
+                <rect x="18" y="34" width="166" height="24" rx="7" fill="rgba(15, 23, 42, 0.82)" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.2" />
+                <text x="101" y="50" text-anchor="middle" fill="#bae6fd" font-size="10.5" font-weight="800" letter-spacing="0.04em">
+                    COAX INPUT / INIT STATE
+                </text>
+            </g>
+        `;
+        for (let s = 0; s < numSteps; s++) {
+            const cx = wireStartX + (s + 0.5) * stepWidth;
+            const isActiveCol = this.activeStepIndex === s + 1;
+            stepHeadersSvg += `
+                <g class="iso-step-col-header" data-step="${s}" style="cursor: pointer;">
+                    <title>Click to inspect state after Pulse Step t=${s + 1}</title>
+                    <rect x="${cx - stepWidth * 0.44}" y="34" width="${stepWidth * 0.88}" height="24" rx="7"
+                          fill="${isActiveCol ? 'rgba(2, 132, 199, 0.92)' : 'rgba(15, 23, 42, 0.78)'}"
+                          stroke="${isActiveCol ? '#7dd3fc' : 'rgba(148, 163, 184, 0.4)'}"
+                          stroke-width="${isActiveCol ? '1.8' : '1.1'}" />
+                    <text x="${cx}" y="50" text-anchor="middle"
+                          fill="${isActiveCol ? '#ffffff' : '#cbd5e1'}" font-size="11" font-weight="800">
+                        Pulse t=${s + 1}
+                    </text>
+                </g>
+            `;
+        }
+        stepHeadersSvg += `
+            <g class="iso-header-out-tag">
+                <rect x="${rightPedX - 52}" y="34" width="90" height="24" rx="7" fill="rgba(15, 23, 42, 0.82)" stroke="rgba(52, 211, 153, 0.45)" stroke-width="1.2" />
+                <text x="${rightPedX - 7}" y="50" text-anchor="middle" fill="#a7f3d0" font-size="10.5" font-weight="800" letter-spacing="0.04em">
+                    LIVE BLOCH
+                </text>
+            </g>
+        `;
+
+        // 3. Entanglement Glow Ribbons between entangled qubit wires on the isometric floor
         let entanglementRibbonsSvg = '';
         if (snap && snap.isSystemEntangled && n >= 2) {
             const entIndices = snap.blochData.filter(b => b.isEntangled).map(b => b.qubit);
@@ -622,13 +651,13 @@ class QuantumCircuitLabUI {
                 const yMin = wireY[Math.min(...entIndices)];
                 const yMax = wireY[Math.max(...entIndices)];
                 entanglementRibbonsSvg = `
-                    <rect x="${wireStartX}" y="${yMin - 12}" width="${wireEndX - wireStartX}" height="${yMax - yMin + 24}"
-                          rx="16" fill="url(#iso-entangle-field)" stroke="rgba(52, 211, 153, 0.45)" stroke-width="1.5" stroke-dasharray="6,4" />
+                    <rect x="${wireStartX}" y="${yMin - 18}" width="${wireEndX - wireStartX}" height="${yMax - yMin + 36}"
+                          rx="18" fill="url(#iso-entangle-field)" stroke="rgba(52, 211, 153, 0.5)" stroke-width="1.6" stroke-dasharray="7,4" />
                 `;
             }
         }
 
-        // 3. Active Time Slice Highlight Plane & Class State Slice Markers (↑ |ψ₀⟩, ↑ |ψ₁⟩, ↑ |ψ₂⟩...)
+        // 4. Active Time Slice Highlight Plane & Class State Slice Markers (↑ |ψ₀⟩, ↑ |ψ₁⟩, ↑ |ψ₂⟩...)
         let sliceMarkersSvg = '';
         for (let s = 0; s <= numSteps; s++) {
             const sx = wireStartX + s * stepWidth;
@@ -639,37 +668,39 @@ class QuantumCircuitLabUI {
             sliceMarkersSvg += `
                 <g class="iso-slice-marker-group" data-slice-step="${s}" style="cursor: pointer;">
                     <title>Click to inspect state slice ${ketLabel} (Step t = ${s}) and its step-by-step algebra</title>
-                    <!-- Vertical dashed slice line across all wires (like scene7_quantum_alg.png) -->
-                    <line x1="${sx}" y1="${wireY[0] - 28}" x2="${sx}" y2="${H - 36}"
-                          stroke="${isCurrentSlice ? '#38bdf8' : 'rgba(148, 163, 184, 0.35)'}"
-                          stroke-width="${isCurrentSlice ? '2.4' : '1.2'}"
+                    <!-- Vertical dashed slice line across all wires -->
+                    <line x1="${sx}" y1="${wireY[0] - 34}" x2="${sx}" y2="${sliceRowY - 18}"
+                          stroke="${isCurrentSlice ? '#38bdf8' : 'rgba(148, 163, 184, 0.32)'}"
+                          stroke-width="${isCurrentSlice ? '2.6' : '1.2'}"
                           stroke-dasharray="${isCurrentSlice ? 'none' : '4,4'}" />
                     ${
                         isCurrentSlice
-                            ? `<rect x="${sx - 16}" y="${wireY[0] - 30}" width="32" height="${H - wireY[0] - 4}" rx="8"
-                                     fill="rgba(56, 189, 248, 0.12)" pointer-events="none" />`
+                            ? `<rect x="${sx - 18}" y="${wireY[0] - 36}" width="36" height="${sliceRowY - wireY[0] + 16}" rx="9"
+                                     fill="rgba(56, 189, 248, 0.13)" pointer-events="none" />`
                             : ''
                     }
-                    <!-- Upward Arrow ↑ and |ψ_k⟩ Pill at bottom (matching class diagram!) -->
-                    <text x="${sx}" y="${H - 24}" text-anchor="middle"
-                          fill="${isCurrentSlice ? '#38bdf8' : '#94a3b8'}" font-size="11" font-weight="900">↑</text>
-                    <rect x="${sx - 23}" y="${H - 22}" width="46" height="18" rx="6"
-                          fill="${isCurrentSlice ? '#0284c7' : 'rgba(15, 23, 42, 0.85)'}"
-                          stroke="${isCurrentSlice ? '#7dd3fc' : 'rgba(148, 163, 184, 0.5)'}" stroke-width="1.3" />
-                    <text x="${sx}" y="${H - 9.5}" text-anchor="middle"
-                          fill="${isCurrentSlice ? '#ffffff' : '#cbd5e1'}" font-size="10.5" font-weight="800" font-family="Georgia, serif" font-style="italic">
+                    <!-- Upward Arrow ↑ and |ψ_k⟩ Pill at bottom -->
+                    <text x="${sx}" y="${sliceRowY - 7}" text-anchor="middle"
+                          fill="${isCurrentSlice ? '#38bdf8' : '#94a3b8'}" font-size="12" font-weight="900">↑</text>
+                    <rect x="${sx - 26}" y="${sliceRowY - 4}" width="52" height="22" rx="7"
+                          fill="${isCurrentSlice ? '#0284c7' : 'rgba(15, 23, 42, 0.88)'}"
+                          stroke="${isCurrentSlice ? '#7dd3fc' : 'rgba(148, 163, 184, 0.55)'}" stroke-width="1.4" />
+                    <text x="${sx}" y="${sliceRowY + 11}" text-anchor="middle"
+                          fill="${isCurrentSlice ? '#ffffff' : '#cbd5e1'}" font-size="11.5" font-weight="800" font-family="Georgia, serif" font-style="italic">
                         ${ketLabel}
                     </text>
                 </g>
             `;
         }
 
-        // 4. Qubit Quantum Wires & Left/Right 3D Bloch Sphere Pedestals
+        // 5. Qubit Quantum Wires, Coax Input Badges & Left/Right 3D Bloch Sphere Pedestals
         let wiresAndPedestalsSvg = '';
         const initVec = QuantumCircuitSimulator.createInitialStatevector(n, this.initialStates);
 
         for (let q = 0; q < n; q++) {
             const wy = wireY[q];
+            const initKey = this.initialStates[q] || '|0⟩';
+            const initSpec = INITIAL_QUBIT_STATES[initKey] || INITIAL_QUBIT_STATES['|0⟩'];
             const initBloch = QuantumCircuitSimulator.computeQubitBlochData(initVec, n, q);
             const liveBloch =
                 snap && snap.blochData && snap.blochData[q]
@@ -680,11 +711,25 @@ class QuantumCircuitLabUI {
             const passedX = wireStartX + this.activeStepIndex * stepWidth;
             wiresAndPedestalsSvg += `
                 <!-- Base quantum wire -->
-                <line x1="${wireStartX - 10}" y1="${wy}" x2="${wireEndX + 10}" y2="${wy}"
-                      stroke="rgba(148, 163, 184, 0.55)" stroke-width="3" />
+                <line x1="${wireStartX - 18}" y1="${wy}" x2="${wireEndX + 16}" y2="${wy}"
+                      stroke="rgba(148, 163, 184, 0.55)" stroke-width="3.4" />
                 <!-- Illuminated active quantum wave segment up to current slice |ψ_t⟩ -->
-                <line x1="${wireStartX - 10}" y1="${wy}" x2="${passedX}" y2="${wy}"
-                      stroke="${liveBloch.isEntangled ? '#34d399' : '#38bdf8'}" stroke-width="3.6" filter="url(#iso-glow)" />
+                <line x1="${wireStartX - 18}" y1="${wy}" x2="${passedX}" y2="${wy}"
+                      stroke="${liveBloch.isEntangled ? '#34d399' : '#38bdf8'}" stroke-width="4.2" filter="url(#iso-glow)" />
+
+                <!-- Coax SMA Port + Clickable Init State Badge right next to Left Pedestal -->
+                <g class="iso-clickable-pedestal iso-coax-init-badge" data-init-qubit="${q}" style="cursor: pointer;">
+                    <title>Qubit Q${q} Initial State: ${initSpec.name} (${initSpec.desc}). Click to cycle |0⟩ → |1⟩ → |+⟩ → |−⟩ → |+i⟩ → |−i⟩</title>
+                    <rect x="${initBadgeX - 30}" y="${wy - 22}" width="60" height="44" rx="9"
+                          fill="rgba(15, 23, 42, 0.92)" stroke="#38bdf8" stroke-width="1.5" />
+                    <circle cx="${initBadgeX - 16}" cy="${wy - 9}" r="4.5" fill="#fbbf24" stroke="#fef08a" stroke-width="1.2" />
+                    <text x="${initBadgeX + 4}" y="${wy - 5}" text-anchor="middle" fill="#bae6fd" font-size="11" font-weight="900">Q${q}</text>
+                    <rect x="${initBadgeX - 24}" y="${wy + 1}" width="48" height="17" rx="5"
+                          fill="rgba(2, 132, 199, 0.35)" stroke="rgba(125, 211, 252, 0.65)" stroke-width="1" />
+                    <text x="${initBadgeX}" y="${wy + 13}" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="800" font-family="monospace">
+                        ${initKey} ↻
+                    </text>
+                </g>
             `;
 
             // Left Input 3D Bloch Sphere Pedestal (Interactive: click to cycle initial state)
@@ -693,8 +738,8 @@ class QuantumCircuitLabUI {
                 wy - 4,
                 sphereR,
                 initBloch,
-                `q${q} In`,
-                this.initialStates[q] || '|0⟩',
+                `Q${q} Input`,
+                initKey,
                 true,
                 q
             );
@@ -705,21 +750,50 @@ class QuantumCircuitLabUI {
                 wy - 4,
                 sphereR,
                 liveBloch,
-                `q${q} State`,
+                `Q${q} Live`,
                 liveBloch.isEntangled ? 'Entangled' : liveBloch.stateLabel.slice(0, 6),
                 false,
                 q
             );
         }
 
-        // 5. Standing 3D Isometric Gate Tiles & Interactive Wire Slots
+        // 6. Integrated Classical Readout Bus (Double Wire + c0..cn Readout + ⇓ c_q Badges)
+        const cReg = snap && snap.classicalRegister ? snap.classicalRegister : [];
+        const cBitsStr = Array.from({ length: n }, (_, q) =>
+            cReg[q] !== null && cReg[q] !== undefined ? cReg[q] : '·'
+        ).join('');
+
+        let classicalBusSvg = `
+            <g class="iso-classical-bus-group">
+                <!-- Left Classical Readout Header Box -->
+                <rect x="24" y="${classicalBusY - 15}" width="154" height="30" rx="8"
+                      fill="rgba(15, 23, 42, 0.92)" stroke="rgba(251, 191, 36, 0.65)" stroke-width="1.4" />
+                <text x="36" y="${classicalBusY + 4}" fill="#fde68a" font-size="11" font-weight="800">Readout c</text>
+                <rect x="112" y="${classicalBusY - 10}" width="58" height="20" rx="5"
+                      fill="rgba(245, 158, 11, 0.22)" stroke="#fbbf24" stroke-width="1.1" />
+                <text x="141" y="${classicalBusY + 4}" text-anchor="middle" fill="#fef08a" font-size="12" font-weight="900" font-family="monospace" letter-spacing="0.12em">
+                    ${cBitsStr}
+                </text>
+
+                <!-- Classical Double Wire across the 3D Stage -->
+                <line x1="${wireStartX - 16}" y1="${classicalBusY - 2.5}" x2="${wireEndX + 16}" y2="${classicalBusY - 2.5}"
+                      stroke="rgba(251, 191, 36, 0.7)" stroke-width="1.8" />
+                <line x1="${wireStartX - 16}" y1="${classicalBusY + 2.5}" x2="${wireEndX + 16}" y2="${classicalBusY + 2.5}"
+                      stroke="rgba(251, 191, 36, 0.7)" stroke-width="1.8" />
+            </g>
+        `;
+
+        // 7. Standing 3D Isometric Gate Tiles, Drop Zones & Interactive Wire Slots
         let gatesAndSlotsSvg = '';
+        const dropZoneH = Math.min(82, rowSpacing > 0 ? rowSpacing - 10 : 82);
+        const dropZoneW = stepWidth - 8;
+
         for (let s = 0; s < numSteps; s++) {
             const cx = wireStartX + (s + 0.5) * stepWidth;
             const isStepExecuted = s < this.activeStepIndex;
             const isCurrentStep = s + 1 === this.activeStepIndex;
 
-            // First draw multi-qubit vertical 3D bridges in column s
+            // Multi-qubit vertical 3D bridges in column s
             const col2QGates = this.gates.filter(
                 g => g.step === s && GATE_LIBRARY[g.type]?.numQubits === 2 && g.targetQubit !== undefined
             );
@@ -729,37 +803,55 @@ class QuantumCircuitLabUI {
                 const def = GATE_LIBRARY[g.type];
                 gatesAndSlotsSvg += `
                     <g class="iso-2q-bridge">
-                        <!-- Shadow on isometric floor -->
-                        <line x1="${cx + 5}" y1="${y1 + 6}" x2="${cx + 5}" y2="${y2 + 6}"
-                              stroke="rgba(15, 23, 42, 0.55)" stroke-width="6" stroke-linecap="round" />
-                        <!-- Glowing vertical entangling column -->
+                        <line x1="${cx + 6}" y1="${y1 + 6}" x2="${cx + 6}" y2="${y2 + 6}"
+                              stroke="rgba(15, 23, 42, 0.6)" stroke-width="7" stroke-linecap="round" />
                         <line x1="${cx}" y1="${y1}" x2="${cx}" y2="${y2}"
-                              stroke="${def.color}" stroke-width="4.2" stroke-linecap="round"
+                              stroke="${def.color}" stroke-width="4.8" stroke-linecap="round"
                               ${isCurrentStep ? 'filter="url(#iso-glow)"' : ''} />
                     </g>
                 `;
             });
 
-            // Classical feed-forward double lines for Measurement gates (like Microsoft Teleportation diagram!)
+            // Classical feed-forward double lines & ⇓ c_q badge for Measurement gates
             const colMeasGates = this.gates.filter(g => g.step === s && g.type === 'M');
             colMeasGates.forEach(mg => {
                 const my = wireY[mg.qubit];
-                const bottomBusY = H - 38;
                 gatesAndSlotsSvg += `
                     <g class="iso-classical-feed">
-                        <line x1="${cx - 2}" y1="${my + 16}" x2="${cx - 2}" y2="${bottomBusY}" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,2" />
-                        <line x1="${cx + 2}" y1="${my + 16}" x2="${cx + 2}" y2="${bottomBusY}" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,2" />
+                        <line x1="${cx - 2.5}" y1="${my + 20}" x2="${cx - 2.5}" y2="${classicalBusY - 11}" stroke="#fbbf24" stroke-width="1.8" stroke-dasharray="4,2" />
+                        <line x1="${cx + 2.5}" y1="${my + 20}" x2="${cx + 2.5}" y2="${classicalBusY - 11}" stroke="#fbbf24" stroke-width="1.8" stroke-dasharray="4,2" />
+                        <rect x="${cx - 24}" y="${classicalBusY - 11}" width="48" height="20" rx="6"
+                              fill="#78350f" stroke="#fbbf24" stroke-width="1.4" />
+                        <text x="${cx}" y="${classicalBusY + 3}" text-anchor="middle" fill="#fef08a" font-size="10.5" font-weight="800" font-family="monospace">
+                            ⇓ c${mg.qubit}
+                        </text>
                     </g>
                 `;
             });
 
-            // Now draw each wire slot (q, s)
+            // Each wire slot (q, s): Drop zone + either Placed 3D Gate or Empty Landing Pad (+)
             for (let q = 0; q < n; q++) {
                 const cy = wireY[q];
                 const directGate = this.gates.find(g => g.qubit === q && g.step === s);
                 const targetOfGate = this.gates.find(
                     g => g.step === s && GATE_LIBRARY[g.type]?.numQubits === 2 && g.targetQubit === q
                 );
+
+                // Invisible / highlightable full-cell drop zone for HTML5 & pointer drag-and-drop
+                gatesAndSlotsSvg += `
+                    <rect class="iso-drop-zone"
+                          data-qubit="${q}"
+                          data-step="${s}"
+                          x="${cx - dropZoneW / 2}"
+                          y="${cy - dropZoneH / 2}"
+                          width="${dropZoneW}"
+                          height="${dropZoneH}"
+                          rx="12"
+                          fill="transparent"
+                          stroke="transparent"
+                          stroke-width="2.2"
+                          style="cursor: pointer;" />
+                `;
 
                 if (directGate) {
                     const def = GATE_LIBRARY[directGate.type];
@@ -791,10 +883,10 @@ class QuantumCircuitLabUI {
                     // Interactive empty landing pad on the isometric wire
                     gatesAndSlotsSvg += `
                         <g class="iso-empty-slot" data-qubit="${q}" data-step="${s}" style="cursor: pointer;">
-                            <title>Click to place ${this.selectedPaletteGate} gate on wire q${q} at Step ${s + 1}</title>
-                            <ellipse cx="${cx}" cy="${cy}" rx="12" ry="7"
-                                     fill="rgba(15, 23, 42, 0.65)" stroke="rgba(148, 163, 184, 0.55)" stroke-width="1.2" stroke-dasharray="2,2" />
-                            <text x="${cx}" y="${cy + 3.5}" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="800">+</text>
+                            <title>Drag a gate here or click to place ${this.selectedPaletteGate} on wire Q${q} at Step t=${s + 1}</title>
+                            <ellipse cx="${cx}" cy="${cy}" rx="15" ry="9"
+                                     fill="rgba(15, 23, 42, 0.72)" stroke="rgba(148, 163, 184, 0.65)" stroke-width="1.4" stroke-dasharray="3,2" />
+                            <text x="${cx}" y="${cy + 4}" text-anchor="middle" fill="#cbd5e1" font-size="13" font-weight="800">+</text>
                         </g>
                     `;
                 }
@@ -802,34 +894,34 @@ class QuantumCircuitLabUI {
         }
 
         stage.innerHTML = `
-            <svg class="qcl-qpu-svg qcl-iso-stage-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+            <svg class="qcl-qpu-svg qcl-iso-stage-svg" id="qcl-iso-stage-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
                 <defs>
                     <linearGradient id="iso-stage-bg" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#0b192c" />
+                        <stop offset="0%" stop-color="#091526" />
                         <stop offset="50%" stop-color="#0f2942" />
-                        <stop offset="100%" stop-color="#1e3a5f" />
+                        <stop offset="100%" stop-color="#1d3a5f" />
                     </linearGradient>
                     <radialGradient id="iso-sphere-glass" cx="35%" cy="30%" r="70%">
-                        <stop offset="0%" stop-color="rgba(224, 242, 254, 0.55)" />
-                        <stop offset="55%" stop-color="rgba(56, 189, 248, 0.22)" />
-                        <stop offset="100%" stop-color="rgba(3, 105, 161, 0.42)" />
+                        <stop offset="0%" stop-color="rgba(224, 242, 254, 0.58)" />
+                        <stop offset="55%" stop-color="rgba(56, 189, 248, 0.24)" />
+                        <stop offset="100%" stop-color="rgba(3, 105, 161, 0.45)" />
                     </radialGradient>
                     <radialGradient id="iso-sphere-entangled" cx="35%" cy="30%" r="70%">
-                        <stop offset="0%" stop-color="rgba(209, 250, 229, 0.6)" />
-                        <stop offset="55%" stop-color="rgba(16, 185, 129, 0.28)" />
-                        <stop offset="100%" stop-color="rgba(4, 120, 87, 0.48)" />
+                        <stop offset="0%" stop-color="rgba(209, 250, 229, 0.62)" />
+                        <stop offset="55%" stop-color="rgba(16, 185, 129, 0.30)" />
+                        <stop offset="100%" stop-color="rgba(4, 120, 87, 0.50)" />
                     </radialGradient>
                     <linearGradient id="iso-pedestal-beam" x1="0" y1="1" x2="0" y2="0">
-                        <stop offset="0%" stop-color="rgba(56, 189, 248, 0.42)" />
+                        <stop offset="0%" stop-color="rgba(56, 189, 248, 0.45)" />
                         <stop offset="100%" stop-color="rgba(56, 189, 248, 0.0)" />
                     </linearGradient>
                     <linearGradient id="iso-entangle-field" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stop-color="rgba(16, 185, 129, 0.06)" />
-                        <stop offset="50%" stop-color="rgba(16, 185, 129, 0.18)" />
-                        <stop offset="100%" stop-color="rgba(16, 185, 129, 0.06)" />
+                        <stop offset="0%" stop-color="rgba(16, 185, 129, 0.07)" />
+                        <stop offset="50%" stop-color="rgba(16, 185, 129, 0.20)" />
+                        <stop offset="100%" stop-color="rgba(16, 185, 129, 0.07)" />
                     </linearGradient>
                     <filter id="iso-glow" x="-30%" y="-30%" width="160%" height="160%">
-                        <feGaussianBlur stdDeviation="2.5" result="blur" />
+                        <feGaussianBlur stdDeviation="2.8" result="blur" />
                         <feMerge>
                             <feMergeNode in="blur" />
                             <feMergeNode in="SourceGraphic" />
@@ -837,14 +929,17 @@ class QuantumCircuitLabUI {
                     </filter>
                 </defs>
 
-                <!-- Isometric Gridded Stage Floor (Microsoft Teleportation & Class Diagram Aesthetic) -->
-                <rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="url(#iso-stage-bg)" stroke="#334155" stroke-width="1.5" />
+                <!-- Isometric Gridded Stage Floor -->
+                <rect x="0" y="0" width="${W}" height="${H}" rx="16" fill="url(#iso-stage-bg)" stroke="#334155" stroke-width="1.6" />
                 <g opacity="0.9">${isoGridSvg}</g>
 
                 <!-- Top Stage Banner Label -->
-                <text x="18" y="21" fill="#7dd3fc" font-size="9.5" font-weight="800" letter-spacing="0.08em">
-                    3D ISOMETRIC QUANTUM STAGE • INPUT BLOCH PEDESTALS ⟶ STANDING UNITARY GATES ⟶ OUTPUT BLOCH PEDESTALS
+                <text x="20" y="22" fill="#7dd3fc" font-size="10.5" font-weight="800" letter-spacing="0.08em">
+                    3D ISOMETRIC QUANTUM STAGE • DRAG GATES FROM PALETTE ONTO WIRES OR DRAG 3D GATES TO REARRANGE
                 </text>
+
+                <!-- Clickable Top Pulse Column Headers -->
+                ${stepHeadersSvg}
 
                 <!-- Entanglement Field Ribbon -->
                 ${entanglementRibbonsSvg}
@@ -852,16 +947,56 @@ class QuantumCircuitLabUI {
                 <!-- Vertical State Slice Markers (↑ |ψ₀⟩, ↑ |ψ₁⟩, ...) -->
                 ${sliceMarkersSvg}
 
-                <!-- Qubit Wires & 3D Translucent Bloch Sphere Pedestals -->
+                <!-- Classical Readout Bus (Double Wire + c0..cn Readout) -->
+                ${classicalBusSvg}
+
+                <!-- Qubit Wires, Coax Input Pills & 3D Translucent Bloch Sphere Pedestals -->
                 ${wiresAndPedestalsSvg}
 
-                <!-- Standing Isometric 3D Gate Tiles & Interactive Wire Slots -->
+                <!-- Standing Isometric 3D Gate Tiles, Drop Zones & Interactive Wire Slots -->
                 ${gatesAndSlotsSvg}
             </svg>
         `;
 
-        // Bind interactive events on the Isometric 3D Stage:
-        // 1) Clicking a left input Bloch pedestal cycles that wire's initial state!
+        const svgEl = stage.querySelector('#qcl-iso-stage-svg');
+
+        // Helper to locate the nearest (qubit, step) slot from clientX/clientY on the 3D SVG
+        const getNearestSlotFromClientPoint = (clientX, clientY) => {
+            if (!svgEl) return null;
+            const rect = svgEl.getBoundingClientRect();
+            if (!rect.width || !rect.height) return null;
+            const svgX = ((clientX - rect.left) / rect.width) * W;
+            const svgY = ((clientY - rect.top) / rect.height) * H;
+
+            // Check if within wire region
+            if (svgX < wireStartX - 24 || svgX > wireEndX + 24) return null;
+            if (svgY < wireY[0] - 58 || svgY > wireY[n - 1] + 58) return null;
+
+            const step = Math.max(0, Math.min(numSteps - 1, Math.floor((svgX - wireStartX) / stepWidth)));
+            let bestQ = 0;
+            let bestDist = Infinity;
+            for (let q = 0; q < n; q++) {
+                const d = Math.abs(svgY - wireY[q]);
+                if (d < bestDist) {
+                    bestDist = d;
+                    bestQ = q;
+                }
+            }
+            return { qubit: bestQ, step };
+        };
+
+        const highlightDropZone = (q, s) => {
+            stage.querySelectorAll('.iso-drop-zone').forEach(dz => {
+                const match = Number(dz.dataset.qubit) === q && Number(dz.dataset.step) === s;
+                dz.classList.toggle('drag-over', match);
+            });
+        };
+
+        const clearDropZoneHighlights = () => {
+            stage.querySelectorAll('.iso-drop-zone.drag-over').forEach(dz => dz.classList.remove('drag-over'));
+        };
+
+        // 1) Clicking a left input Bloch pedestal or Coax Q_q Init badge cycles that wire's initial state!
         stage.querySelectorAll('.iso-clickable-pedestal').forEach(ped => {
             ped.addEventListener('click', e => {
                 e.stopPropagation();
@@ -870,7 +1005,17 @@ class QuantumCircuitLabUI {
             });
         });
 
-        // 2) Clicking any ↑ |ψ_k⟩ slice marker jumps the timeline & math derivation to step k!
+        // 2) Clicking a Top Pulse Column Header jumps to that step!
+        stage.querySelectorAll('.iso-step-col-header').forEach(hdr => {
+            hdr.addEventListener('click', e => {
+                e.stopPropagation();
+                this.stopAutoPlay();
+                this.activeStepIndex = Number(hdr.dataset.step) + 1;
+                this.refreshAll();
+            });
+        });
+
+        // 3) Clicking any ↑ |ψ_k⟩ slice marker jumps the timeline & math derivation to step k!
         stage.querySelectorAll('.iso-slice-marker-group').forEach(marker => {
             marker.addEventListener('click', e => {
                 e.stopPropagation();
@@ -880,18 +1025,125 @@ class QuantumCircuitLabUI {
             });
         });
 
-        // 3) Clicking an empty slot (+) on the isometric wire places the selected gate!
-        stage.querySelectorAll('.iso-empty-slot').forEach(slot => {
+        // 4) Clicking an empty slot (+) or drop zone places the selected palette gate!
+        const handleEmptySlotClick = (q, s) => {
+            const existing = this.gates.find(
+                g => g.step === s && (g.qubit === q || (GATE_LIBRARY[g.type]?.numQubits === 2 && g.targetQubit === q))
+            );
+            if (!existing) {
+                this.placeGateAt(this.selectedPaletteGate, q, s);
+            }
+        };
+
+        stage.querySelectorAll('.iso-empty-slot, .iso-drop-zone').forEach(slot => {
             slot.addEventListener('click', e => {
                 e.stopPropagation();
                 const q = Number(slot.dataset.qubit);
                 const s = Number(slot.dataset.step);
-                this.placeGateAt(this.selectedPaletteGate, q, s);
+                handleEmptySlotClick(q, s);
             });
         });
 
-        // 4) Clicking a standing 3D gate tile selects it (or clicking its × button deletes it)
+        // 5) Full HTML5 Drag-and-Drop from Left Gate Palette onto the 3D Stage!
+        if (svgEl) {
+            svgEl.addEventListener('dragover', e => {
+                e.preventDefault();
+                const slot = getNearestSlotFromClientPoint(e.clientX, e.clientY);
+                if (slot) {
+                    highlightDropZone(slot.qubit, slot.step);
+                } else {
+                    clearDropZoneHighlights();
+                }
+            });
+
+            svgEl.addEventListener('dragleave', e => {
+                if (!svgEl.contains(e.relatedTarget)) {
+                    clearDropZoneHighlights();
+                }
+            });
+
+            svgEl.addEventListener('drop', e => {
+                e.preventDefault();
+                clearDropZoneHighlights();
+                const slot = getNearestSlotFromClientPoint(e.clientX, e.clientY);
+                if (!slot) return;
+                try {
+                    const payload = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    if (payload.source === 'palette' && payload.gateType) {
+                        this.placeGateAt(payload.gateType, slot.qubit, slot.step);
+                    } else if (payload.source === 'board' && payload.gateId) {
+                        this.movePlacedGate(payload.gateId, slot.qubit, slot.step);
+                    }
+                } catch (err) {
+                    // Fallback to currently selected palette gate
+                    if (this.selectedPaletteGate) {
+                        this.placeGateAt(this.selectedPaletteGate, slot.qubit, slot.step);
+                    }
+                }
+            });
+        }
+
+        // 6) Interactive Pointer Drag-and-Drop + Click Selection on Standing 3D Gate Tiles!
         stage.querySelectorAll('.iso-placed-gate-group').forEach(gEl => {
+            let dragState = null;
+
+            gEl.addEventListener('pointerdown', e => {
+                if (e.button !== 0) return;
+                const delBtn = e.target.closest('.iso-gate-del');
+                if (delBtn) return; // let click handler delete
+
+                e.stopPropagation();
+                const gId = gEl.dataset.gateId;
+                const gObj = this.gates.find(g => g.id === gId);
+                if (!gObj) return;
+
+                dragState = {
+                    gateId: gId,
+                    origQubit: gObj.qubit,
+                    origStep: gObj.step,
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    hasMoved: false,
+                    targetSlot: null
+                };
+
+                gEl.setPointerCapture(e.pointerId);
+            });
+
+            gEl.addEventListener('pointermove', e => {
+                if (!dragState) return;
+                const dist = Math.hypot(e.clientX - dragState.startX, e.clientY - dragState.startY);
+                if (dist > 6) {
+                    dragState.hasMoved = true;
+                    gEl.style.opacity = '0.65';
+                    const slot = getNearestSlotFromClientPoint(e.clientX, e.clientY);
+                    dragState.targetSlot = slot;
+                    if (slot) {
+                        highlightDropZone(slot.qubit, slot.step);
+                    } else {
+                        clearDropZoneHighlights();
+                    }
+                }
+            });
+
+            gEl.addEventListener('pointerup', e => {
+                if (!dragState) return;
+                const state = dragState;
+                dragState = null;
+                gEl.style.opacity = '1';
+                clearDropZoneHighlights();
+
+                if (
+                    state.hasMoved &&
+                    state.targetSlot &&
+                    (state.targetSlot.qubit !== state.origQubit || state.targetSlot.step !== state.origStep)
+                ) {
+                    this.selectedPlacedGateId = state.gateId;
+                    this.movePlacedGate(state.gateId, state.targetSlot.qubit, state.targetSlot.step);
+                    return;
+                }
+            });
+
             gEl.addEventListener('click', e => {
                 e.stopPropagation();
                 const delBtn = e.target.closest('.iso-gate-del');
@@ -915,26 +1167,27 @@ class QuantumCircuitLabUI {
     }
 
     /**
-     * Draws a standing 3D Isometric Gate Prism / Control Sphere / CNOT Target / Measurement Gauge
-     * on the Isometric Stage
+     * Draws a larger standing 3D Isometric Gate Prism / Control Sphere / CNOT Target / Measurement Gauge
+     * on the Unified 3D Isometric Stage
      */
     renderSVGIsometricGateTile(cx, cy, gate, def, isSelected, isCurrentStep, isStepExecuted, role) {
         const color = def.color;
         const glowAttr = isCurrentStep || isSelected ? 'filter="url(#iso-glow)"' : '';
         const strokeColor = isSelected ? '#fde047' : '#ffffff';
-        const strokeW = isSelected ? '2.4' : '1.4';
+        const strokeW = isSelected ? '2.8' : '1.6';
 
         // CNOT Control Dot (3D glowing sphere on control wire)
         if (gate.type === 'CNOT' && role === 'primary') {
             return `
-                <g class="iso-placed-gate-group" data-gate-id="${gate.id}" style="cursor: pointer;">
-                    <title>CNOT Control on q${gate.qubit} → Target on q${gate.targetQubit} (Click to select or remove)</title>
-                    <ellipse cx="${cx}" cy="${cy + 14}" rx="10" ry="4" fill="rgba(15, 23, 42, 0.55)" />
-                    <circle cx="${cx}" cy="${cy}" r="10" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeW}" ${glowAttr} />
-                    <circle cx="${cx - 3}" cy="${cy - 3}" r="3" fill="rgba(255,255,255,0.65)" />
-                    <g class="iso-gate-del" transform="translate(${cx + 11}, ${cy - 11})">
-                        <circle r="7" fill="#ef4444" stroke="#ffffff" stroke-width="1.2" />
-                        <text y="3.5" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="800">&times;</text>
+                <g class="iso-placed-gate-group" data-gate-id="${gate.id}" style="cursor: grab;">
+                    <title>CNOT Control on Q${gate.qubit} → Target on Q${gate.targetQubit} (Drag to move, click to select or × to remove)</title>
+                    <ellipse cx="${cx}" cy="${cy + 16}" rx="12" ry="4.5" fill="rgba(15, 23, 42, 0.6)" />
+                    <circle cx="${cx}" cy="${cy}" r="12" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeW}" ${glowAttr} />
+                    <circle cx="${cx - 3.5}" cy="${cy - 3.5}" r="3.5" fill="rgba(255,255,255,0.7)" />
+                    <text x="${cx}" y="${cy + 27}" text-anchor="middle" fill="#a7f3d0" font-size="8.5" font-weight="800">CTRL</text>
+                    <g class="iso-gate-del" transform="translate(${cx + 13}, ${cy - 13})" style="cursor: pointer;">
+                        <circle r="8" fill="#ef4444" stroke="#ffffff" stroke-width="1.3" />
+                        <text y="3.5" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="800">&times;</text>
                     </g>
                 </g>
             `;
@@ -943,22 +1196,22 @@ class QuantumCircuitLabUI {
         // CNOT Target ⊕ (3D Isometric XOR ring)
         if (gate.type === 'CNOT' && role === 'target') {
             return `
-                <g class="iso-placed-gate-group" data-gate-id="${gate.id}" style="cursor: pointer;">
-                    <title>CNOT Target (⊕) on q${gate.targetQubit} controlled by q${gate.qubit}</title>
-                    <ellipse cx="${cx}" cy="${cy + 18}" rx="15" ry="5" fill="rgba(15, 23, 42, 0.55)" />
-                    <circle cx="${cx + 3}" cy="${cy + 2}" r="15" fill="#064e3b" stroke="${color}" stroke-width="1.5" />
-                    <circle cx="${cx}" cy="${cy}" r="15" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeW}" ${glowAttr} />
-                    <line x1="${cx - 9}" y1="${cy}" x2="${cx + 9}" y2="${cy}" stroke="#ffffff" stroke-width="2.6" />
-                    <line x1="${cx}" y1="${cy - 9}" x2="${cx}" y2="${cy + 9}" stroke="#ffffff" stroke-width="2.6" />
+                <g class="iso-placed-gate-group" data-gate-id="${gate.id}" style="cursor: grab;">
+                    <title>CNOT Target (⊕) on Q${gate.targetQubit} controlled by Q${gate.qubit} (Click to select or drag control)</title>
+                    <ellipse cx="${cx}" cy="${cy + 21}" rx="18" ry="6" fill="rgba(15, 23, 42, 0.6)" />
+                    <circle cx="${cx + 3.5}" cy="${cy + 2.5}" r="18" fill="#064e3b" stroke="${color}" stroke-width="1.6" />
+                    <circle cx="${cx}" cy="${cy}" r="18" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeW}" ${glowAttr} />
+                    <line x1="${cx - 11}" y1="${cy}" x2="${cx + 11}" y2="${cy}" stroke="#ffffff" stroke-width="3" />
+                    <line x1="${cx}" y1="${cy - 11}" x2="${cx}" y2="${cy + 11}" stroke="#ffffff" stroke-width="3" />
                 </g>
             `;
         }
 
         // Standing 3D Isometric Prism Tile for H, X, Y, Z, S, T, Rx, Ry, Rz, CZ, SWAP, M
-        const w = 36;
-        const h = 36;
-        const dx = 6; // 3D isometric depth extrude X
-        const dy = -5; // 3D isometric depth extrude Y
+        const w = 44;
+        const h = 44;
+        const dx = 7.5; // 3D isometric depth extrude X
+        const dy = -6; // 3D isometric depth extrude Y
         const x0 = cx - w / 2;
         const y0 = cy - h / 2;
 
@@ -966,42 +1219,44 @@ class QuantumCircuitLabUI {
             ? formatRadiansShort(gate.theta)
             : gate.type === 'M'
             ? 'READ'
+            : gate.type === 'CZ' && role === 'target'
+            ? 'PHASE'
             : '';
 
         return `
-            <g class="iso-placed-gate-group" data-gate-id="${gate.id}" style="cursor: pointer;">
-                <title>${def.name} at Step ${gate.step + 1} (Click to inspect or remove)</title>
+            <g class="iso-placed-gate-group" data-gate-id="${gate.id}" style="cursor: grab;">
+                <title>${def.name} on Q${role === 'target' ? gate.targetQubit : gate.qubit} at Step t=${gate.step + 1} (Drag to move to any wire/step, click to inspect)</title>
                 <!-- Isometric floor drop shadow -->
-                <ellipse cx="${cx + 3}" cy="${cy + h / 2 + 7}" rx="18" ry="5.5" fill="rgba(2, 6, 23, 0.6)" />
+                <ellipse cx="${cx + 3}" cy="${cy + h / 2 + 8}" rx="22" ry="6.5" fill="rgba(2, 6, 23, 0.65)" />
 
                 <!-- 3D Top Extruded Face -->
                 <polygon points="${x0},${y0} ${x0 + dx},${y0 + dy} ${x0 + w + dx},${y0 + dy} ${x0 + w},${y0}"
-                         fill="${color}" filter="brightness(1.25)" stroke="rgba(255,255,255,0.6)" stroke-width="0.9" />
+                         fill="${color}" filter="brightness(1.25)" stroke="rgba(255,255,255,0.65)" stroke-width="1" />
 
                 <!-- 3D Right Extruded Side Face -->
                 <polygon points="${x0 + w},${y0} ${x0 + w + dx},${y0 + dy} ${x0 + w + dx},${y0 + h + dy} ${x0 + w},${y0 + h}"
-                         fill="${color}" filter="brightness(0.75)" stroke="rgba(255,255,255,0.4)" stroke-width="0.9" />
+                         fill="${color}" filter="brightness(0.75)" stroke="rgba(255,255,255,0.45)" stroke-width="1" />
 
                 <!-- Front Standing Isometric Gate Face -->
-                <rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="5"
+                <rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="6"
                       fill="${color}" stroke="${strokeColor}" stroke-width="${strokeW}" ${glowAttr} />
 
                 ${
                     gate.type === 'M'
                         ? `
-                        <!-- Measurement Meter Dial Gauge Arc & Needle (like ms_teleportation.jpg) -->
-                        <path d="M ${cx - 11} ${cy + 4} A 11 11 0 0 1 ${cx + 11} ${cy + 4}" fill="none" stroke="#ffffff" stroke-width="2" />
-                        <line x1="${cx}" y1="${cy + 4}" x2="${cx + 7}" y2="${cy - 6}" stroke="#fde047" stroke-width="2.2" stroke-linecap="round" />
-                        <text x="${cx}" y="${cy + 14}" text-anchor="middle" fill="#fde047" font-size="7.5" font-weight="800">METER</text>
+                        <!-- Measurement Meter Dial Gauge Arc & Needle -->
+                        <path d="M ${cx - 13} ${cy + 5} A 13 13 0 0 1 ${cx + 13} ${cy + 5}" fill="none" stroke="#ffffff" stroke-width="2.2" />
+                        <line x1="${cx}" y1="${cy + 5}" x2="${cx + 8}" y2="${cy - 7}" stroke="#fde047" stroke-width="2.5" stroke-linecap="round" />
+                        <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="#fde047" font-size="8.5" font-weight="800">METER</text>
                     `
                         : `
-                        <text x="${cx}" y="${cy + (subText ? 1 : 5)}" text-anchor="middle"
-                              fill="#ffffff" font-size="14.5" font-weight="900" font-family="Inter, sans-serif">
-                            ${role === 'target' && gate.type === 'SWAP' ? '✕' : def.symbol}
+                        <text x="${cx}" y="${cy + (subText ? 1 : 6)}" text-anchor="middle"
+                              fill="#ffffff" font-size="16.5" font-weight="900" font-family="Inter, sans-serif">
+                            ${role === 'target' && gate.type === 'SWAP' ? '✕' : role === 'target' && gate.type === 'CZ' ? 'Z' : def.symbol}
                         </text>
                         ${
                             subText
-                                ? `<text x="${cx}" y="${cy + 13}" text-anchor="middle" fill="rgba(255,255,255,0.92)" font-size="8" font-weight="700" font-family="monospace">${subText}</text>`
+                                ? `<text x="${cx}" y="${cy + 15}" text-anchor="middle" fill="rgba(255,255,255,0.95)" font-size="9" font-weight="800" font-family="monospace">${subText}</text>`
                                 : ''
                         }
                     `
@@ -1010,9 +1265,9 @@ class QuantumCircuitLabUI {
                 ${
                     role === 'primary'
                         ? `
-                        <g class="iso-gate-del" transform="translate(${x0 + w + 3}, ${y0 - 3})">
-                            <circle r="7" fill="#ef4444" stroke="#ffffff" stroke-width="1.2" />
-                            <text y="3.5" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="800">&times;</text>
+                        <g class="iso-gate-del" transform="translate(${x0 + w + 4}, ${y0 - 4})" style="cursor: pointer;">
+                            <circle r="8" fill="#ef4444" stroke="#ffffff" stroke-width="1.3" />
+                            <text y="3.5" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="800">&times;</text>
                         </g>
                     `
                         : ''
@@ -1839,15 +2094,15 @@ class QuantumCircuitLabUI {
      * Renders the Tactile Coaxial Pulse & Circuit Composer Grid
      */
     renderCircuitBoard() {
-        const board = document.getElementById('qcl-circuit-board');
         const countPill = document.getElementById('qcl-qubit-count-pill');
-        if (!board) return;
-
         if (countPill) {
-            countPill.textContent = `${this.numQubits} Transmon${this.numQubits > 1 ? 's' : ''} (${1 << this.numQubits} States)`;
+            countPill.textContent = `${this.numQubits} Qubit${this.numQubits > 1 ? 's' : ''} (${1 << this.numQubits} States)`;
         }
 
         this.updatePlacedGateActionBar();
+
+        const board = document.getElementById('qcl-circuit-board');
+        if (!board) return;
 
         let html = `
             <div class="qcl-grid-header">
